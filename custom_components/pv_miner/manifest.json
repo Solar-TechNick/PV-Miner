@@ -1,0 +1,13 @@
+{
+  "domain": "pv_miner",
+  "name": "PV Miner (Solar Bitcoin Mining)",
+  "codeowners": ["@Solar-TechNick"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/Solar-TechNick/PV-Miner",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/Solar-TechNick/PV-Miner/issues",
+  "requirements": ["aiohttp>=3.8.0"],
+  "version": "1.0.0"
+}

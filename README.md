@@ -32,27 +32,8 @@ Durch die Anbindung an **Home Assistant** erhältst du:
 
 ### 📦 Funktionen
 
-- MQTT- und REST-basierte Live-Daten der Miner
 - Energie- & Temperaturüberwachung
 - Automationen für Start/Stopp je nach Sonnenstand & Akkuladung
 - Kompatibel mit ESPHome, Node-RED, Zigbee & mehr
 
-### 🔧 Beispiel-Sensoren (`configuration.yaml`)
 
-```yaml
-sensor:
-  - platform: rest
-    name: "Antminer Hashrate"
-    resource: "http://192.168.1.150/api/status"
-    value_template: "{{ value_json.hashrate }}"
-    unit_of_measurement: "TH/s"
-
-  - platform: mqtt
-    name: "PV Leistung"
-    state_topic: "solar/pv_power"
-    unit_of_measurement: "W"
-
-  - platform: mqtt
-    name: "Batterieladung"
-    state_topic: "solar/battery_soc"
-    unit_of_measurement: "%"
