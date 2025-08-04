@@ -16,7 +16,7 @@ class LuxOSAPIError(Exception):
 class LuxOSAPI:
     """Client for communicating with LuxOS API."""
 
-    def __init__(self, host: str, username: str = "root", password: str = "rootz"):
+    def __init__(self, host: str, username: str = "root", password: str = "root"):
         """Initialize the API client."""
         self.host = host.rstrip("/")
         self.username = username
