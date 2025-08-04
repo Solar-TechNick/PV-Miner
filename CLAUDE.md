@@ -27,7 +27,7 @@ This project is designed as a Home Assistant integration with the following key 
 
 ## Development Setup
 
-The Home Assistant custom component is now fully implemented with the following structure:
+The Home Assistant custom component is fully implemented and **connection-tested** with the following structure:
 
 ```
 custom_components/pv_miner/    # Home Assistant custom component
@@ -48,7 +48,33 @@ custom_components/pv_miner/    # Home Assistant custom component
 __tests__/                   # Test suite
 ├── test_luxos_api.py        # API client tests
 └── test_config_flow.py      # Configuration flow tests
+
+debug_connection.py          # Full aiohttp-based connection debugging
+simple_debug.py              # Dependency-free connection testing  
+test_api_direct.py           # Direct LuxOS API testing
 ```
+
+## Version History
+
+### v1.0.2 (Current) - Connection Fix
+
+- ✅ **CRITICAL**: Fixed "Cannot connect to miner" issue
+- ✅ **CGMiner API**: Uses port 4028 for reliable connection
+- ✅ **Authentication**: Changed default password to `root`
+- ✅ **Debugging**: Added comprehensive debug tools
+- ✅ **Verified**: Tested on S21+ with LuxOS 2025.7.10.152155
+
+### v1.0.1 - HACS Improvements
+
+- ✅ **HACS**: Fixed validation (7/8 checks passing)
+- ✅ **Repository**: Added topics and GitHub templates
+- ✅ **API**: Enhanced error handling and logging
+
+### v1.0.0 - Initial Release
+
+- ✅ **Integration**: Complete Home Assistant custom component
+- ✅ **Features**: All planned functionality implemented
+- ✅ **Languages**: English and German translations
 
 ## Configuration
 
@@ -124,13 +150,58 @@ pytest __tests__/ --cov=custom_components/pv_miner
 
 ## Integration Testing
 
-When testing features, consider:
+### Connection Testing
+The integration now uses **CGMiner API on port 4028** as the primary connection method:
 
-- LuxOS API connectivity and authentication
-- Entity state updates and coordinator refresh cycles
-- Service call execution and error handling
-- Power profile switching and frequency adjustments
-- Solar power logic and automatic adjustments
-- Multi-miner priority-based power distribution
-- Hardware failure scenarios (miner offline, network issues)
+```bash
+# Test basic connectivity 
+python3 simple_debug.py 192.168.1.212
+
+# Test full API functionality
+python3 test_api_direct.py
+
+# Debug with external dependencies
+python3 debug_connection.py 192.168.1.212
+```
+
+### Verified Working Configuration
+**Tested on Antminer S21+ (192.168.1.212) with LuxOS 2025.7.10.152155:**
+- ✅ **CGMiner API (Port 4028)**: Full functionality confirmed
+- ✅ **Real-time Data**: Hashrate 239.4 TH/s, 3 hashboards, temperatures
+- ✅ **Device Status**: All boards alive and operational
+- ✅ **Pool Management**: NiceHash connection active
+- ❌ **Web API Endpoints**: Return 404 (bypassed with TCP API)
+
+### Authentication
+- **Default Username**: `root`
+- **Default Password**: `root` (changed from `rootz` in v1.0.2)
+- **API Method**: Direct TCP connection to CGMiner API
+- **Fallback**: Web API for advanced LuxOS features
+
+### Testing Checklist
+When testing features, verify:
+
+- **CGMiner API connectivity** via port 4028 (primary method)
+- **Entity state updates** and coordinator refresh cycles
+- **Service call execution** and error handling
+- **Individual hashboard control** (3 boards: ASC 0, 1, 2)
+- **Real-time monitoring** (hashrate, temperature, power)
+- **Solar power logic** and automatic adjustments
+- **Multi-miner priority-based** power distribution
+- **Hardware failure scenarios** (miner offline, network issues)
+
+### Known Working Commands
+**CGMiner API Commands (Port 4028):**
+- `stats` - Complete miner statistics and performance data
+- `devs` - Individual hashboard status and temperatures  
+- `pools` - Mining pool connection and share statistics
+- `version` - LuxOS version and miner identification
+- `summary` - Overall miner status summary
+
+### Troubleshooting
+**Connection Issues:**
+1. Verify port 4028 is accessible (`telnet 192.168.1.212 4028`)
+2. Check credentials are `root`/`root` (not `rootz`)
+3. Run debug scripts to identify specific connection problems
+4. Ensure LuxOS firmware is installed and CGMiner API is enabled
 
