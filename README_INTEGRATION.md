@@ -73,7 +73,7 @@ Eine vollständige Home Assistant Custom Component für nachhaltiges Bitcoin-Min
    - **IP-Adresse**: IP Ihres Antminers (z.B. 192.168.1.210)
    - **Name**: Anzeigename (z.B. "Antminer S19j Pro+")
    - **Benutzername**: Standard ist "root"
-   - **Passwort**: Standard ist "rootz"
+   - **Passwort**: Standard ist "root"
 
 ### Leistungseinstellungen
 - **Mindestleistung**: Minimale Wattzahl für den Betrieb

@@ -47,7 +47,7 @@ A comprehensive Home Assistant integration for solar-powered Bitcoin mining with
    - IP Address (e.g., 192.168.1.210)
    - Miner Name (e.g., "Antminer S19j Pro+")
    - Username (default: "root")
-   - Password (default: "rootz")
+   - Password (default: "root")
 5. Configure power limits and priorities
 6. Set update intervals
 

@@ -6,7 +6,7 @@ import json
 import sys
 
 
-async def test_miner_connection(host: str, username: str = "root", password: str = "rootz"):
+async def test_miner_connection(host: str, username: str = "root", password: str = "root"):
     """Test various connection methods to the miner."""
     print(f"Testing connection to miner at {host}...")
     
@@ -116,7 +116,7 @@ async def main():
     
     host = sys.argv[1]
     username = sys.argv[2] if len(sys.argv) > 2 else "root"
-    password = sys.argv[3] if len(sys.argv) > 3 else "rootz"
+    password = sys.argv[3] if len(sys.argv) > 3 else "root"
     
     await test_miner_connection(host, username, password)
 

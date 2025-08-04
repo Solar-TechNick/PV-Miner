@@ -54,37 +54,94 @@ class LuxOSAPI:
             else:
                 payload["params"] = list(params.values()) if params else []
 
-        # Try multiple possible endpoints
+        # Try multiple possible endpoints and methods
         endpoints = [
-            f"http://{self.host}/cgi-bin/luci",
-            f"http://{self.host}/cgi-bin/luxcgi",
-            f"http://{self.host}/cgi-bin/minerApi.cgi"
+            # LuxOS endpoints
+            (f"http://{self.host}/cgi-bin/luci", "POST"),
+            (f"http://{self.host}/cgi-bin/luxcgi", "POST"),
+            (f"http://{self.host}/cgi-bin/minerApi.cgi", "POST"),
+            # Standard CGMiner endpoints
+            (f"http://{self.host}:4028", "TCP"),  # CGMiner API port
+            (f"http://{self.host}/api/v1/stats", "GET"),
+            (f"http://{self.host}/api/stats", "GET"),
+            # Antminer web interface
+            (f"http://{self.host}/cgi-bin/get_system_info.cgi", "GET"),
+            (f"http://{self.host}/cgi-bin/minerStatus.cgi", "GET"),
         ]
         
-        for url in endpoints:
+        last_error = None
+        
+        for url, method in endpoints:
             try:
-                async with session.post(url, json=payload, headers={'Content-Type': 'application/json'}) as response:
-                    if response.status == 200:
-                        text = await response.text()
+                if method == "POST":
+                    async with session.post(url, json=payload, headers={'Content-Type': 'application/json'}) as response:
+                        if response.status == 200:
+                            text = await response.text()
+                            try:
+                                data = json.loads(text)
+                                _LOGGER.debug(f"Successful response from {url}: {data}")
+                                return data
+                            except json.JSONDecodeError:
+                                # Some responses might not be JSON
+                                _LOGGER.debug(f"Non-JSON response from {url}: {text[:200]}")
+                                return {"result": text}
+                        elif response.status == 404:
+                            _LOGGER.debug(f"Endpoint not found: {url}")
+                            continue
+                        else:
+                            last_error = f"HTTP {response.status} from {url}: {await response.text()}"
+                            _LOGGER.debug(last_error)
+                            
+                elif method == "GET":
+                    async with session.get(url) as response:
+                        if response.status == 200:
+                            text = await response.text()
+                            try:
+                                data = json.loads(text)
+                                _LOGGER.debug(f"Successful GET response from {url}")
+                                return data
+                            except json.JSONDecodeError:
+                                _LOGGER.debug(f"Non-JSON GET response from {url}: {text[:200]}")
+                                return {"result": text}
+                        elif response.status == 404:
+                            _LOGGER.debug(f"GET endpoint not found: {url}")
+                            continue
+                        else:
+                            last_error = f"GET HTTP {response.status} from {url}"
+                            _LOGGER.debug(last_error)
+                            
+                elif method == "TCP" and command in ["stats", "summary", "version"]:
+                    # Try CGMiner TCP API
+                    try:
+                        import socket
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        sock.settimeout(5)
+                        sock.connect((self.host, 4028))
+                        
+                        cmd = json.dumps({"command": command, "parameter": ""})
+                        sock.send(cmd.encode())
+                        
+                        response = sock.recv(4096).decode()
+                        sock.close()
+                        
                         try:
-                            data = json.loads(text)
+                            data = json.loads(response)
+                            _LOGGER.debug(f"Successful TCP response from {self.host}:4028")
                             return data
                         except json.JSONDecodeError:
-                            # Some responses might not be JSON
-                            return {"result": text}
-                    elif response.status == 404:
-                        # Try next endpoint
+                            return {"result": response}
+                            
+                    except Exception as tcp_error:
+                        last_error = f"TCP connection failed: {tcp_error}"
+                        _LOGGER.debug(last_error)
                         continue
-                    else:
-                        raise LuxOSAPIError(f"HTTP {response.status}: {await response.text()}")
                         
             except aiohttp.ClientError as e:
-                # Try next endpoint
-                if url == endpoints[-1]:  # Last endpoint
-                    raise LuxOSAPIError(f"Connection error: {e}")
+                last_error = f"Connection error to {url}: {e}"
+                _LOGGER.debug(last_error)
                 continue
                 
-        raise LuxOSAPIError("No valid API endpoint found")
+        raise LuxOSAPIError(f"No valid API endpoint found. Last error: {last_error}")
 
     async def login(self) -> bool:
         """Login to the miner and get session ID."""
@@ -126,6 +183,13 @@ class LuxOSAPI:
 
     async def get_stats(self) -> Dict[str, Any]:
         """Get miner statistics."""
+        # Try CGMiner API first (we know it works)
+        try:
+            return await self._try_cgminer_tcp("stats")
+        except LuxOSAPIError:
+            pass
+        
+        # Fallback to web API
         if not self.session_id:
             await self.login()
         
@@ -133,6 +197,13 @@ class LuxOSAPI:
 
     async def get_devs(self) -> Dict[str, Any]:
         """Get device information."""
+        # Try CGMiner API first
+        try:
+            return await self._try_cgminer_tcp("devs")
+        except LuxOSAPIError:
+            pass
+        
+        # Fallback to web API
         if not self.session_id:
             await self.login()
         
@@ -140,6 +211,13 @@ class LuxOSAPI:
 
     async def get_pools(self) -> Dict[str, Any]:
         """Get mining pool information."""
+        # Try CGMiner API first
+        try:
+            return await self._try_cgminer_tcp("pools")
+        except LuxOSAPIError:
+            pass
+        
+        # Fallback to web API
         if not self.session_id:
             await self.login()
         
@@ -230,7 +308,16 @@ class LuxOSAPI:
     async def test_connection(self) -> bool:
         """Test if the miner is reachable."""
         try:
-            # First try login
+            # First try CGMiner API directly (since we know it works)
+            try:
+                response = await self._try_cgminer_tcp("version")
+                if response and "STATUS" in str(response):
+                    _LOGGER.info("CGMiner API connection successful")
+                    return True
+            except Exception as e:
+                _LOGGER.debug(f"CGMiner TCP failed: {e}")
+            
+            # Try web-based login
             if await self.login():
                 # Try to get stats to confirm connection
                 try:
@@ -240,7 +327,7 @@ class LuxOSAPI:
                     # Login worked but stats failed, still consider it connected
                     return True
             
-            # If login fails, try basic CGMiner commands without authentication
+            # If login fails, try basic web commands without authentication
             try:
                 response = await self._make_request("version")
                 if response and (isinstance(response, dict) or isinstance(response, str)):
@@ -251,6 +338,35 @@ class LuxOSAPI:
             return False
         except LuxOSAPIError:
             return False
+    
+    async def _try_cgminer_tcp(self, command: str) -> Dict[str, Any]:
+        """Try CGMiner TCP API directly."""
+        import socket
+        
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(10)
+            
+            # Connect to CGMiner API port
+            sock.connect((self.host, 4028))
+            
+            # Send command
+            cmd = json.dumps({"command": command, "parameter": ""})
+            sock.send(cmd.encode())
+            
+            # Receive response
+            response = sock.recv(8192).decode('utf-8', errors='ignore')
+            sock.close()
+            
+            # Parse JSON response
+            try:
+                data = json.loads(response)
+                return data
+            except json.JSONDecodeError:
+                return {"result": response}
+                
+        except Exception as e:
+            raise LuxOSAPIError(f"CGMiner TCP API failed: {e}")
     
     async def _try_cgminer_command(self, command: str) -> Dict[str, Any]:
         """Try a standard CGMiner command without authentication."""
