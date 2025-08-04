@@ -133,3 +133,4 @@ When testing features, consider:
 - Solar power logic and automatic adjustments
 - Multi-miner priority-based power distribution
 - Hardware failure scenarios (miner offline, network issues)
+
