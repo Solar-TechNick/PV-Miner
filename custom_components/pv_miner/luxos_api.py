@@ -308,65 +308,94 @@ class LuxOSAPI:
     async def test_connection(self) -> bool:
         """Test if the miner is reachable."""
         try:
-            # First try CGMiner API directly (since we know it works)
+            # First try CGMiner API directly using asyncio
+            _LOGGER.info(f"Testing CGMiner API connection to {self.host}:4028")
+            
             try:
-                response = await self._try_cgminer_tcp("version")
-                if response and "STATUS" in str(response):
+                import asyncio
+                import socket
+                import json
+                
+                # Use asyncio for the socket connection
+                def _sync_cgminer_test():
+                    try:
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        sock.settimeout(10)
+                        sock.connect((self.host, 4028))
+                        
+                        cmd = json.dumps({"command": "version", "parameter": ""})
+                        sock.send(cmd.encode())
+                        
+                        response = sock.recv(4096).decode('utf-8', errors='ignore')
+                        sock.close()
+                        
+                        data = json.loads(response)
+                        return "STATUS" in str(data)
+                    except Exception:
+                        return False
+                
+                # Run in thread pool to avoid blocking
+                loop = asyncio.get_event_loop()
+                result = await loop.run_in_executor(None, _sync_cgminer_test)
+                
+                if result:
                     _LOGGER.info("CGMiner API connection successful")
                     return True
+                else:
+                    _LOGGER.debug("CGMiner API test failed")
+                    
             except Exception as e:
-                _LOGGER.debug(f"CGMiner TCP failed: {e}")
+                _LOGGER.debug(f"CGMiner TCP test error: {e}")
             
-            # Try web-based login
-            if await self.login():
-                # Try to get stats to confirm connection
-                try:
-                    await self.get_stats()
-                    return True
-                except LuxOSAPIError:
-                    # Login worked but stats failed, still consider it connected
-                    return True
-            
-            # If login fails, try basic web commands without authentication
+            # Fallback: Try web-based login
             try:
-                response = await self._make_request("version")
-                if response and (isinstance(response, dict) or isinstance(response, str)):
+                if await self.login():
+                    _LOGGER.info("Web API login successful")
                     return True
-            except LuxOSAPIError:
-                pass
-                
+            except Exception as e:
+                _LOGGER.debug(f"Web API login failed: {e}")
+            
+            _LOGGER.error("All connection methods failed")
             return False
-        except LuxOSAPIError:
+            
+        except Exception as e:
+            _LOGGER.error(f"Connection test error: {e}")
             return False
     
     async def _try_cgminer_tcp(self, command: str) -> Dict[str, Any]:
         """Try CGMiner TCP API directly."""
+        import asyncio
         import socket
         
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(10)
-            
-            # Connect to CGMiner API port
-            sock.connect((self.host, 4028))
-            
-            # Send command
-            cmd = json.dumps({"command": command, "parameter": ""})
-            sock.send(cmd.encode())
-            
-            # Receive response
-            response = sock.recv(8192).decode('utf-8', errors='ignore')
-            sock.close()
-            
-            # Parse JSON response
+        def _sync_cgminer_call():
             try:
-                data = json.loads(response)
-                return data
-            except json.JSONDecodeError:
-                return {"result": response}
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(10)
                 
-        except Exception as e:
-            raise LuxOSAPIError(f"CGMiner TCP API failed: {e}")
+                # Connect to CGMiner API port
+                sock.connect((self.host, 4028))
+                
+                # Send command
+                cmd = json.dumps({"command": command, "parameter": ""})
+                sock.send(cmd.encode())
+                
+                # Receive response
+                response = sock.recv(8192).decode('utf-8', errors='ignore')
+                sock.close()
+                
+                # Parse JSON response
+                try:
+                    data = json.loads(response)
+                    return data
+                except json.JSONDecodeError:
+                    return {"result": response}
+                    
+            except Exception as e:
+                raise LuxOSAPIError(f"CGMiner TCP API failed: {e}")
+        
+        # Run in thread pool to avoid blocking the event loop
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, _sync_cgminer_call)
     
     async def _try_cgminer_command(self, command: str) -> Dict[str, Any]:
         """Try a standard CGMiner command without authentication."""
