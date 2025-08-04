@@ -51,12 +51,27 @@ async def validate_input(hass: HomeAssistant, data: Dict[str, Any]) -> Dict[str,
     api = LuxOSAPI(data[CONF_HOST], data[CONF_USERNAME], data[CONF_PASSWORD])
     
     try:
+        _LOGGER.info("Testing connection to miner at %s", data[CONF_HOST])
+        
         if not await api.test_connection():
+            _LOGGER.error("Connection test failed for %s", data[CONF_HOST])
             raise LuxOSAPIError("Cannot connect to miner")
         
-        # Get miner info
-        stats = await api.get_stats()
-        devs = await api.get_devs()
+        _LOGGER.info("Connection successful, getting miner info...")
+        
+        # Try to get miner info - but don't fail if this doesn't work
+        stats = None
+        devs = None
+        
+        try:
+            stats = await api.get_stats()
+        except LuxOSAPIError as e:
+            _LOGGER.warning("Could not get stats: %s", e)
+            
+        try:
+            devs = await api.get_devs()
+        except LuxOSAPIError as e:
+            _LOGGER.warning("Could not get devices: %s", e)
         
         return {
             "title": data[CONF_NAME],
@@ -65,6 +80,9 @@ async def validate_input(hass: HomeAssistant, data: Dict[str, Any]) -> Dict[str,
                 "devices": devs
             }
         }
+    except Exception as e:
+        _LOGGER.error("Validation failed: %s", e)
+        raise
     finally:
         await api.close()
 

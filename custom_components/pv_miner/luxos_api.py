@@ -40,31 +40,51 @@ class LuxOSAPI:
         """Make a request to the LuxOS API."""
         session = await self._get_session()
         
+        # LuxOS uses JSON-RPC format
         payload = {
-            "cmd": command,
-            "session_id": self.session_id if self.session_id else ""
+            "id": 1,
+            "method": command,
+            "params": []
         }
         
         if params:
-            payload.update(params)
+            # Convert params dict to list format for JSON-RPC
+            if command == "logon":
+                payload["params"] = [params.get("user", ""), params.get("pwd", "")]
+            else:
+                payload["params"] = list(params.values()) if params else []
 
-        url = f"http://{self.host}/cgi-bin/luxcgi"
+        # Try multiple possible endpoints
+        endpoints = [
+            f"http://{self.host}/cgi-bin/luci",
+            f"http://{self.host}/cgi-bin/luxcgi",
+            f"http://{self.host}/cgi-bin/minerApi.cgi"
+        ]
         
-        try:
-            async with session.post(url, json=payload) as response:
-                if response.status != 200:
-                    raise LuxOSAPIError(f"HTTP {response.status}: {await response.text()}")
+        for url in endpoints:
+            try:
+                async with session.post(url, json=payload, headers={'Content-Type': 'application/json'}) as response:
+                    if response.status == 200:
+                        text = await response.text()
+                        try:
+                            data = json.loads(text)
+                            return data
+                        except json.JSONDecodeError:
+                            # Some responses might not be JSON
+                            return {"result": text}
+                    elif response.status == 404:
+                        # Try next endpoint
+                        continue
+                    else:
+                        raise LuxOSAPIError(f"HTTP {response.status}: {await response.text()}")
+                        
+            except aiohttp.ClientError as e:
+                # Try next endpoint
+                if url == endpoints[-1]:  # Last endpoint
+                    raise LuxOSAPIError(f"Connection error: {e}")
+                continue
                 
-                text = await response.text()
-                try:
-                    data = json.loads(text)
-                    return data
-                except json.JSONDecodeError:
-                    # Some LuxOS responses might not be JSON
-                    return {"result": text}
-                    
-        except aiohttp.ClientError as e:
-            raise LuxOSAPIError(f"Connection error: {e}")
+        raise LuxOSAPIError("No valid API endpoint found")
 
     async def login(self) -> bool:
         """Login to the miner and get session ID."""
@@ -74,12 +94,31 @@ class LuxOSAPI:
                 "pwd": self.password
             })
             
-            if "session_id" in response:
-                self.session_id = response["session_id"]
-                return True
-            else:
-                _LOGGER.error("Login failed: %s", response)
-                return False
+            # Handle different response formats
+            if isinstance(response, dict):
+                # JSON-RPC response format
+                if "result" in response and response["result"]:
+                    result = response["result"]
+                    if isinstance(result, dict) and "session_id" in result:
+                        self.session_id = result["session_id"]
+                        return True
+                    elif isinstance(result, str) and "session" in result.lower():
+                        # Some LuxOS versions return session ID as string
+                        self.session_id = result
+                        return True
+                
+                # Direct response format
+                if "session_id" in response:
+                    self.session_id = response["session_id"]
+                    return True
+                
+                # Check for successful login without explicit session ID
+                if response.get("STATUS") == "S" or response.get("status") == "OK":
+                    self.session_id = "authenticated"
+                    return True
+            
+            _LOGGER.error("Login failed: %s", response)
+            return False
                 
         except LuxOSAPIError as e:
             _LOGGER.error("Login error: %s", e)
@@ -191,8 +230,52 @@ class LuxOSAPI:
     async def test_connection(self) -> bool:
         """Test if the miner is reachable."""
         try:
-            await self.login()
-            await self.get_stats()
-            return True
+            # First try login
+            if await self.login():
+                # Try to get stats to confirm connection
+                try:
+                    await self.get_stats()
+                    return True
+                except LuxOSAPIError:
+                    # Login worked but stats failed, still consider it connected
+                    return True
+            
+            # If login fails, try basic CGMiner commands without authentication
+            try:
+                response = await self._make_request("version")
+                if response and (isinstance(response, dict) or isinstance(response, str)):
+                    return True
+            except LuxOSAPIError:
+                pass
+                
+            return False
         except LuxOSAPIError:
             return False
+    
+    async def _try_cgminer_command(self, command: str) -> Dict[str, Any]:
+        """Try a standard CGMiner command without authentication."""
+        session = await self._get_session()
+        
+        # Try CGMiner API format (simple JSON)
+        payload = {"command": command}
+        
+        try:
+            async with session.post(f"http://{self.host}/cgi-bin/minerApi.cgi", json=payload) as response:
+                if response.status == 200:
+                    text = await response.text()
+                    try:
+                        return json.loads(text)
+                    except json.JSONDecodeError:
+                        return {"result": text}
+        except aiohttp.ClientError:
+            pass
+            
+        # Try simple GET request for basic info
+        try:
+            async with session.get(f"http://{self.host}/") as response:
+                if response.status == 200:
+                    return {"status": "reachable"}
+        except aiohttp.ClientError:
+            pass
+            
+        raise LuxOSAPIError("No valid connection method found")
