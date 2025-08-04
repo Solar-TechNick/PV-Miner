@@ -148,6 +148,35 @@ pytest __tests__/ --cov=custom_components/pv_miner
 - **Debug Logging**: Enable debug logging for `custom_components.pv_miner` domain
 - **API Testing**: Use `test_connection()` method to verify miner connectivity
 
+### Git Workflow - IMPORTANT
+
+**ALWAYS use proper versioning when committing to GitHub:**
+
+```bash
+# 1. Update version in manifest.json
+# Edit custom_components/pv_miner/manifest.json - increment version
+
+# 2. Commit changes
+git add .
+git commit -m "fix: Description of changes"
+
+# 3. Create version tag
+git tag -a v1.0.X -m "Release notes..."
+
+# 4. Push with versioning
+git push origin main && git push origin v1.0.X
+
+# 5. Create GitHub release
+gh release create v1.0.X --title "Title" --notes "Release notes" --latest
+```
+
+**Version Numbering:**
+- **Patch (1.0.X)**: Bug fixes, minor improvements
+- **Minor (1.X.0)**: New features, API additions
+- **Major (X.0.0)**: Breaking changes, major rework
+
+**Never push without proper versioning and release tags!**
+
 ## Integration Testing
 
 ### Connection Testing
