@@ -132,42 +132,58 @@ class PVMinerSensor(CoordinatorEntity, SensorEntity):
 
     def _extract_power(self, data: Dict[str, Any]) -> Optional[int]:
         """Extract power consumption from miner data."""
-        stats = data.get("stats", {})
-        if isinstance(stats, dict) and "STATS" in stats:
-            stats_data = stats["STATS"]
-            if isinstance(stats_data, list) and len(stats_data) > 1:
-                miner_stats = stats_data[1]
-                if "Power" in miner_stats:
-                    return int(miner_stats["Power"])
+        # Power data is in the separate power command
+        power = data.get("power", {})
+        if isinstance(power, dict) and "POWER" in power:
+            power_data = power["POWER"]
+            if isinstance(power_data, list) and len(power_data) > 0:
+                power_info = power_data[0]
+                if "Watts" in power_info:
+                    return int(power_info["Watts"])
         return None
 
     def _extract_temperature(self, data: Dict[str, Any]) -> Optional[float]:
         """Extract average temperature from miner data."""
-        temps = data.get("temps", {})
-        if isinstance(temps, dict) and "TEMPS" in temps:
-            temp_data = temps["TEMPS"]
-            if isinstance(temp_data, list):
-                total_temp = 0
-                count = 0
-                for temp_info in temp_data:
-                    if isinstance(temp_info, dict) and "Temperature" in temp_info:
-                        total_temp += float(temp_info["Temperature"])
-                        count += 1
-                if count > 0:
-                    return round(total_temp / count, 1)
-        return None
-
-    def _extract_fan_speed(self, data: Dict[str, Any]) -> Optional[int]:
-        """Extract fan speed from miner data."""
+        # Use temp_max from stats for overall temperature
         stats = data.get("stats", {})
         if isinstance(stats, dict) and "STATS" in stats:
             stats_data = stats["STATS"]
             if isinstance(stats_data, list) and len(stats_data) > 1:
                 miner_stats = stats_data[1]
-                # Fan speed might be in different fields
-                for fan_key in ["Fan Speed In", "Fan Speed Out", "fan_speed"]:
-                    if fan_key in miner_stats:
-                        return int(miner_stats[fan_key])
+                if "temp_max" in miner_stats:
+                    return float(miner_stats["temp_max"])
+        return None
+
+    def _extract_fan_speed(self, data: Dict[str, Any]) -> Optional[int]:
+        """Extract average fan speed from miner data."""
+        # Use fans data for more accurate fan speeds
+        fans = data.get("fans", {})
+        if isinstance(fans, dict) and "FANS" in fans:
+            fan_data = fans["FANS"]
+            if isinstance(fan_data, list) and len(fan_data) > 0:
+                total_rpm = 0
+                count = 0
+                for fan_info in fan_data:
+                    if isinstance(fan_info, dict) and "RPM" in fan_info:
+                        total_rpm += int(fan_info["RPM"])
+                        count += 1
+                if count > 0:
+                    return round(total_rpm / count)
+        
+        # Fallback to stats data
+        stats = data.get("stats", {})
+        if isinstance(stats, dict) and "STATS" in stats:
+            stats_data = stats["STATS"]
+            if isinstance(stats_data, list) and len(stats_data) > 1:
+                miner_stats = stats_data[1]
+                # Get average of fan1-fan4
+                fan_speeds = []
+                for i in range(1, 5):
+                    fan_key = f"fan{i}"
+                    if fan_key in miner_stats and miner_stats[fan_key] > 0:
+                        fan_speeds.append(int(miner_stats[fan_key]))
+                if fan_speeds:
+                    return round(sum(fan_speeds) / len(fan_speeds))
         return None
 
     def _extract_efficiency(self, data: Dict[str, Any]) -> Optional[float]:
@@ -244,12 +260,25 @@ class PVMinerHashboardSensor(CoordinatorEntity, SensorEntity):
         """Return the hashboard temperature."""
         if not self.coordinator.data or not self.coordinator.data.get("connected"):
             return None
-            
-        temps = self.coordinator.data.get("temps", {})
-        if isinstance(temps, dict) and "TEMPS" in temps:
-            temp_data = temps["TEMPS"]
-            if isinstance(temp_data, list) and len(temp_data) > self._board_num:
-                board_temp = temp_data[self._board_num]
-                if isinstance(board_temp, dict) and "Temperature" in board_temp:
-                    return float(board_temp["Temperature"])
+        
+        # Use DEVS data for individual hashboard temperatures
+        devs = self.coordinator.data.get("devs", {})
+        if isinstance(devs, dict) and "DEVS" in devs:
+            dev_data = devs["DEVS"]
+            if isinstance(dev_data, list):
+                for dev in dev_data:
+                    if isinstance(dev, dict) and dev.get("ASC") == self._board_num:
+                        if "Temperature" in dev:
+                            return float(dev["Temperature"])
+        
+        # Fallback to stats data
+        stats = self.coordinator.data.get("stats", {})
+        if isinstance(stats, dict) and "STATS" in stats:
+            stats_data = stats["STATS"]
+            if isinstance(stats_data, list) and len(stats_data) > 1:
+                miner_stats = stats_data[1]
+                temp_key = f"temp{self._board_num + 1}"  # temp1, temp2, temp3
+                if temp_key in miner_stats:
+                    return float(miner_stats[temp_key])
+        
         return None

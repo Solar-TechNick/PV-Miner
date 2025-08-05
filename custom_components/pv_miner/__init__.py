@@ -43,13 +43,19 @@ class PVMinerCoordinator(DataUpdateCoordinator):
             stats = await self.api.get_stats()
             devs = await self.api.get_devs()
             pools = await self.api.get_pools()
-            temps = await self.api.get_temps()
+            
+            # Get additional sensor data
+            power = await self.api._execute_command("power", "")
+            temps = await self.api._execute_command("temps", "")
+            fans = await self.api._execute_command("fans", "")
             
             return {
                 "stats": stats,
                 "devs": devs,
                 "pools": pools,
+                "power": power,
                 "temps": temps,
+                "fans": fans,
                 "connected": True
             }
         except LuxOSAPIError as err:
