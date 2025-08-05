@@ -23,6 +23,7 @@ class LuxOSAPI:
         self.username = username
         self.password = password
         self._session: Optional[aiohttp.ClientSession] = None
+        self._luxos_session_id: Optional[str] = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
         """Get or create aiohttp session."""
@@ -191,6 +192,31 @@ class LuxOSAPI:
         _LOGGER.error(error_msg)
         raise LuxOSAPIError(error_msg)
 
+    async def _get_luxos_session_id(self) -> Optional[str]:
+        """Get or create a LuxOS session ID."""
+        try:
+            # First check if we have an existing session
+            _LOGGER.debug("Checking existing LuxOS session...")
+            result = await self._execute_command("session")
+            
+            if "SESSION" in result and result["SESSION"]:
+                session_info = result["SESSION"][0]
+                session_id = session_info.get("SessionID", "")
+                
+                if session_id:
+                    self._luxos_session_id = session_id
+                    _LOGGER.debug(f"Using existing session ID: {self._luxos_session_id}")
+                    return self._luxos_session_id
+            
+            # No valid session, create a new one via login
+            _LOGGER.debug("No valid session found, creating new session...")
+            if await self.login():
+                return self._luxos_session_id
+                
+        except Exception as e:
+            _LOGGER.error(f"Failed to get LuxOS session ID: {e}")
+        return None
+
     async def test_connection(self) -> bool:
         """Test if the miner is reachable."""
         try:
@@ -204,6 +230,10 @@ class LuxOSAPI:
                     status = status_list[0]
                     if status.get("STATUS") == "S":
                         _LOGGER.info(f"Connection successful: {status.get('Description', 'LuxOS miner')}")
+                        
+                        # Get session ID for commands that need it
+                        await self._get_luxos_session_id()
+                        
                         return True
             
             _LOGGER.warning("Connection test returned unexpected format")
@@ -235,11 +265,27 @@ class LuxOSAPI:
 
     # Authentication-based methods (for web interface access)
     async def login(self) -> bool:
-        """Login to the miner web interface (not needed for API calls)."""
-        # Note: API calls don't require authentication according to LuxOS docs
-        # This is only for web interface access if needed
-        _LOGGER.debug("Login not required for LuxOS API calls")
-        return True
+        """Login to LuxOS and create a session for advanced commands."""
+        try:
+            _LOGGER.debug(f"Attempting LuxOS login with {self.username}")
+            result = await self._execute_command("logon", f"{self.username},{self.password}")
+            
+            if "SESSION" in result and result["SESSION"]:
+                session_info = result["SESSION"][0]
+                if "SessionID" in session_info and session_info["SessionID"]:
+                    self._luxos_session_id = session_info["SessionID"]
+                    _LOGGER.info(f"LuxOS login successful, session ID: {self._luxos_session_id}")
+                    return True
+                else:
+                    _LOGGER.warning("Login succeeded but no session ID received")
+                    return False
+            
+            _LOGGER.error(f"Login failed: {result}")
+            return False
+            
+        except Exception as e:
+            _LOGGER.error(f"Login error: {e}")
+            return False
 
     async def get_temps(self) -> Dict[str, Any]:
         """Get temperature information."""
@@ -256,11 +302,27 @@ class LuxOSAPI:
 
     async def enable_hashboard(self, board: int) -> Dict[str, Any]:
         """Enable specific hashboard."""
-        return await self._execute_command("enableboard", str(board))
+        # Ensure we have a session ID
+        if not self._luxos_session_id:
+            await self._get_luxos_session_id()
+        
+        if not self._luxos_session_id:
+            raise LuxOSAPIError("No LuxOS session ID available for hashboard command")
+        
+        parameter = f"{self._luxos_session_id},{board}"
+        return await self._execute_command("enableboard", parameter)
 
     async def disable_hashboard(self, board: int) -> Dict[str, Any]:
         """Disable specific hashboard."""
-        return await self._execute_command("disableboard", str(board))
+        # Ensure we have a session ID
+        if not self._luxos_session_id:
+            await self._get_luxos_session_id()
+        
+        if not self._luxos_session_id:
+            raise LuxOSAPIError("No LuxOS session ID available for hashboard command")
+        
+        parameter = f"{self._luxos_session_id},{board}"
+        return await self._execute_command("disableboard", parameter)
 
     async def pause_mining(self) -> Dict[str, Any]:
         """Pause mining operations."""
