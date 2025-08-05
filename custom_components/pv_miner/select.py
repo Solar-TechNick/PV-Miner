@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, POWER_PROFILES, SOLAR_MODES
+from .const import DOMAIN, SOLAR_MODES
 from .luxos_api import LuxOSAPIError
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,14 +28,20 @@ async def async_setup_entry(
     entities = []
     
     # Power profile selector
-    entities.append(
-        PVMinerPowerProfile(
-            coordinator,
-            api,
-            config_entry.entry_id,
-            config[CONF_NAME],
-        )
+    power_profile_entity = PVMinerPowerProfile(
+        coordinator,
+        api,
+        config_entry.entry_id,
+        config[CONF_NAME],
     )
+    
+    # Update available profiles from miner
+    try:
+        await power_profile_entity.async_update_available_profiles()
+    except Exception as e:
+        _LOGGER.debug("Could not initialize profiles: %s", e)
+    
+    entities.append(power_profile_entity)
     
     # Solar operation mode selector
     entities.append(
@@ -65,12 +71,13 @@ class PVMinerPowerProfile(CoordinatorEntity, SelectEntity):
         self._api = api
         self._config_entry_id = config_entry_id
         self._miner_name = miner_name
-        self._current_profile = "balanced"
+        self._current_profile = "310MHz"  # Default to current profile
+        self._available_profiles = ["default", "310MHz"]  # Will be updated dynamically
         
         self._attr_name = f"{miner_name} Power Profile"
         self._attr_unique_id = f"{config_entry_id}_power_profile"
         self._attr_icon = "mdi:speedometer"
-        self._attr_options = list(POWER_PROFILES.keys())
+        self._attr_options = self._available_profiles
 
     @property
     def device_info(self) -> Dict[str, Any]:
@@ -90,21 +97,18 @@ class PVMinerPowerProfile(CoordinatorEntity, SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         """Select a power profile."""
-        if option not in POWER_PROFILES:
+        if option not in self._available_profiles:
             _LOGGER.error("Invalid power profile: %s", option)
             return
         
         try:
-            profile_config = POWER_PROFILES[option]
-            overclock = profile_config["overclock"]
-            
-            await self._api.set_frequency(overclock)
+            # Set profile for all boards (board=None means all boards)
+            await self._api.set_profile(option)
             self._current_profile = option
             
             _LOGGER.info(
-                "Set power profile '%s' (overclock: %d) for miner %s",
-                profile_config["name"],
-                overclock,
+                "Set power profile '%s' for miner %s",
+                option,
                 self._miner_name
             )
             
@@ -112,6 +116,18 @@ class PVMinerPowerProfile(CoordinatorEntity, SelectEntity):
         except LuxOSAPIError as e:
             _LOGGER.error("Error setting power profile: %s", e)
             raise
+
+    async def async_update_available_profiles(self) -> None:
+        """Update the list of available profiles from the miner."""
+        try:
+            profiles = await self._api.get_available_profiles()
+            if profiles:
+                self._available_profiles = profiles
+                self._attr_options = profiles
+                _LOGGER.debug("Updated available profiles: %s", profiles)
+        except Exception as e:
+            _LOGGER.debug("Could not update available profiles: %s", e)
+            # Keep default profiles if API call fails
 
 
 class PVMinerSolarMode(CoordinatorEntity, SelectEntity):

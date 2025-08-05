@@ -3,7 +3,7 @@ import asyncio
 import json
 import logging
 import socket
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 
@@ -292,9 +292,42 @@ class LuxOSAPI:
         # LuxOS includes temperature data in stats and devs commands
         return await self.get_stats()
 
-    async def set_profile(self, profile: int) -> Dict[str, Any]:
-        """Set power profile."""
-        return await self._execute_command("profileset", str(profile))
+    async def get_available_profiles(self) -> List[str]:
+        """Get list of available profiles."""
+        available_profiles = []
+        
+        # Known profiles to check
+        possible_profiles = ["default", "310MHz", "400MHz", "500MHz", "600MHz", "700MHz"]
+        
+        for profile_name in possible_profiles:
+            try:
+                result = await self._execute_command("profileget", profile_name)
+                if "PROFILE" in result and result["PROFILE"]:
+                    available_profiles.append(profile_name)
+                    _LOGGER.debug(f"Found profile: {profile_name}")
+            except Exception:
+                # Profile doesn't exist, continue
+                pass
+        
+        return available_profiles
+
+    async def get_profile_details(self, profile_name: str) -> Dict[str, Any]:
+        """Get details for a specific profile."""
+        return await self._execute_command("profileget", profile_name)
+
+    async def set_profile(self, profile_name: str, board: int = None) -> Dict[str, Any]:
+        """Set power profile. LuxOS profileset applies to appropriate boards automatically."""
+        # Ensure we have a session ID
+        if not self._luxos_session_id:
+            await self._get_luxos_session_id()
+        
+        if not self._luxos_session_id:
+            raise LuxOSAPIError("No LuxOS session ID available for profile command")
+        
+        # LuxOS profileset format: session_id,profile_name (board ID not needed)
+        parameter = f"{self._luxos_session_id},{profile_name}"
+        
+        return await self._execute_command("profileset", parameter)
 
     async def set_frequency(self, freq: int) -> Dict[str, Any]:
         """Set frequency (overclock/underclock)."""
@@ -325,12 +358,28 @@ class LuxOSAPI:
         return await self._execute_command("disableboard", parameter)
 
     async def pause_mining(self) -> Dict[str, Any]:
-        """Pause mining operations."""
-        return await self._execute_command("pause")
+        """Pause mining operations using curtail sleep."""
+        # Ensure we have a session ID
+        if not self._luxos_session_id:
+            await self._get_luxos_session_id()
+        
+        if not self._luxos_session_id:
+            raise LuxOSAPIError("No LuxOS session ID available for curtail command")
+        
+        parameter = f"{self._luxos_session_id},sleep"
+        return await self._execute_command("curtail", parameter)
 
     async def resume_mining(self) -> Dict[str, Any]:
-        """Resume mining operations."""
-        return await self._execute_command("resume")
+        """Resume mining operations using curtail wakeup."""
+        # Ensure we have a session ID
+        if not self._luxos_session_id:
+            await self._get_luxos_session_id()
+        
+        if not self._luxos_session_id:
+            raise LuxOSAPIError("No LuxOS session ID available for curtail command")
+        
+        parameter = f"{self._luxos_session_id},wakeup"
+        return await self._execute_command("curtail", parameter)
 
     async def restart_miner(self) -> Dict[str, Any]:
         """Restart the miner."""
