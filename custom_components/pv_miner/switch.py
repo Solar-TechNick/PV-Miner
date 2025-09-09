@@ -115,7 +115,10 @@ class PVMinerSwitch(CoordinatorEntity, SwitchEntity):
                 miner_stats = stats_data[1]
                 if "GHS 5s" in miner_stats:
                     hashrate = float(miner_stats["GHS 5s"])
-                    return hashrate > 0
+                    # Consider the miner enabled if hashrate is above a reasonable threshold
+                    # Curtailed/sleep mode may show very low hashrate (~20-50 TH/s instead of normal ~95 TH/s)
+                    # Set threshold at 1000 GH/s (1 TH/s) to distinguish from curtailed state
+                    return hashrate > 1000  # 1000 GH/s = 1 TH/s
         return False
 
     async def async_turn_on(self, **kwargs: Any) -> None:

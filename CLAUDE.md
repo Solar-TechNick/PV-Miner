@@ -172,22 +172,42 @@ This project uses German language for user-facing documentation and comments. Te
 ### Running Tests
 
 ```bash
-# Install test dependencies
+# Install test dependencies (if needed)
 pip install pytest pytest-asyncio
 
 # Run tests
-pytest __tests__/
+python -m pytest __tests__/
 
-# Run with coverage
-pytest __tests__/ --cov=custom_components/pv_miner
+# Run with coverage (optional)
+python -m pytest __tests__/ --cov=custom_components/pv_miner
+
+# Run specific test files
+python test_api_direct.py
+python debug_connection.py <miner_ip>
+python simple_debug.py <miner_ip>
 ```
+
+### Development Environment
+- Python 3.11+ (Home Assistant requirement)
+- aiohttp>=3.8.0 (only external dependency from manifest.json)
+- No additional build tools required - this is a pure Python Home Assistant integration
 
 ### Development Commands
 
 - **Install Integration**: Copy `custom_components/pv_miner` to HA custom_components directory
-- **Restart HA**: Required after code changes
-- **Debug Logging**: Enable debug logging for `custom_components.pv_miner` domain
+- **Restart HA**: Required after code changes (Developer Tools → Restart)
+- **Debug Logging**: Enable debug logging for `custom_components.pv_miner` domain in configuration.yaml
 - **API Testing**: Use `test_connection()` method to verify miner connectivity
+- **Reload Integration**: Developer Tools → YAML → All YAML configuration (for config changes)
+
+### Code Linting and Type Checking
+No specific linting configuration found. Standard Python tools can be used:
+```bash
+# Optional linting (not configured in project)
+python -m flake8 custom_components/pv_miner/
+python -m mypy custom_components/pv_miner/
+python -m black custom_components/pv_miner/
+```
 
 ### Git Workflow - IMPORTANT
 
@@ -195,20 +215,24 @@ pytest __tests__/ --cov=custom_components/pv_miner
 
 ```bash
 # 1. Update version in manifest.json
-# Edit custom_components/pv_miner/manifest.json - increment version
+# Edit custom_components/pv_miner/manifest.json - increment version field
 
-# 2. Commit changes
+# 2. Commit changes with conventional commits
 git add .
-git commit -m "fix: Description of changes"
+git commit -m "fix: description of bug fix" 
+# OR
+git commit -m "feat: description of new feature"
+# OR  
+git commit -m "docs: update documentation"
 
 # 3. Create version tag
-git tag -a v1.0.X -m "Release notes..."
+git tag -a v1.0.X -m "Version 1.0.X release notes"
 
 # 4. Push with versioning
 git push origin main && git push origin v1.0.X
 
-# 5. Create GitHub release
-gh release create v1.0.X --title "Title" --notes "Release notes" --latest
+# 5. Create GitHub release (if gh CLI available)
+gh release create v1.0.X --title "Version 1.0.X" --notes "Release notes" --latest
 ```
 
 **Version Numbering:**

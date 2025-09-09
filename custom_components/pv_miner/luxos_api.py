@@ -217,6 +217,108 @@ class LuxOSAPI:
             _LOGGER.error(f"Failed to get LuxOS session ID: {e}")
         return None
 
+    async def _execute_curtail_command(self, action: str) -> Dict[str, Any]:
+        """Execute curtail command with proper error handling and session management."""
+        max_retries = 2
+        last_error = None
+        
+        for attempt in range(max_retries):
+            try:
+                # Ensure we have a session ID
+                if not self._luxos_session_id:
+                    await self._get_luxos_session_id()
+                
+                if not self._luxos_session_id:
+                    raise LuxOSAPIError("No LuxOS session ID available for curtail command")
+                
+                parameter = f"{self._luxos_session_id},{action}"
+                result = await self._execute_command("curtail", parameter)
+                
+                # Check if the command succeeded
+                if "STATUS" in result and result["STATUS"]:
+                    status_info = result["STATUS"][0]
+                    if status_info.get("STATUS") == "S":
+                        _LOGGER.info(f"Curtail {action} command successful")
+                        return result
+                    else:
+                        error_msg = status_info.get("Msg", "Unknown curtail error")
+                        
+                        # Handle specific curtail errors
+                        if "Invalid session_id" in error_msg:
+                            _LOGGER.warning(f"Session expired, attempting to renew (attempt {attempt + 1})")
+                            self._luxos_session_id = None  # Force session renewal
+                            continue
+                        elif "curtail mode is idle or sleep" in error_msg and action == "wakeup":
+                            # The miner might already be awake or in transition
+                            _LOGGER.info("Miner may already be awake or transitioning")
+                            return result
+                        elif "curtail mode is idle or sleep" in error_msg and action == "sleep":
+                            # The miner might already be in sleep mode
+                            _LOGGER.info("Miner may already be in sleep mode")  
+                            return result
+                        else:
+                            raise LuxOSAPIError(f"Curtail {action} failed: {error_msg}")
+                
+                return result
+                
+            except Exception as e:
+                last_error = e
+                if attempt == max_retries - 1:
+                    break
+                    
+                _LOGGER.warning(f"Curtail {action} attempt {attempt + 1} failed: {e}")
+                # Clear session ID to force renewal on next attempt
+                self._luxos_session_id = None
+                
+        raise LuxOSAPIError(f"All curtail {action} attempts failed. Last error: {last_error}")
+
+    async def _execute_session_command(self, command: str, parameter: str) -> Dict[str, Any]:
+        """Execute command that requires session ID with retry logic."""
+        max_retries = 2
+        last_error = None
+        
+        for attempt in range(max_retries):
+            try:
+                # Ensure we have a session ID
+                if not self._luxos_session_id:
+                    await self._get_luxos_session_id()
+                
+                if not self._luxos_session_id:
+                    raise LuxOSAPIError(f"No LuxOS session ID available for {command} command")
+                
+                full_parameter = f"{self._luxos_session_id},{parameter}"
+                result = await self._execute_command(command, full_parameter)
+                
+                # Check if the command succeeded
+                if "STATUS" in result and result["STATUS"]:
+                    status_info = result["STATUS"][0]
+                    if status_info.get("STATUS") == "S":
+                        _LOGGER.debug(f"{command} command successful")
+                        return result
+                    else:
+                        error_msg = status_info.get("Msg", f"Unknown {command} error")
+                        
+                        # Handle session expiry
+                        if "Invalid session_id" in error_msg:
+                            _LOGGER.warning(f"Session expired during {command}, attempting to renew (attempt {attempt + 1})")
+                            self._luxos_session_id = None  # Force session renewal
+                            continue
+                        else:
+                            raise LuxOSAPIError(f"{command} failed: {error_msg}")
+                
+                return result
+                
+            except Exception as e:
+                last_error = e
+                if attempt == max_retries - 1:
+                    break
+                    
+                _LOGGER.warning(f"{command} attempt {attempt + 1} failed: {e}")
+                # Clear session ID to force renewal on next attempt
+                self._luxos_session_id = None
+                
+        raise LuxOSAPIError(f"All {command} attempts failed. Last error: {last_error}")
+
     async def test_connection(self) -> bool:
         """Test if the miner is reachable."""
         try:
@@ -317,17 +419,8 @@ class LuxOSAPI:
 
     async def set_profile(self, profile_name: str, board: int = None) -> Dict[str, Any]:
         """Set power profile. LuxOS profileset applies to appropriate boards automatically."""
-        # Ensure we have a session ID
-        if not self._luxos_session_id:
-            await self._get_luxos_session_id()
-        
-        if not self._luxos_session_id:
-            raise LuxOSAPIError("No LuxOS session ID available for profile command")
-        
         # LuxOS profileset format: session_id,profile_name (board ID not needed)
-        parameter = f"{self._luxos_session_id},{profile_name}"
-        
-        return await self._execute_command("profileset", parameter)
+        return await self._execute_session_command("profileset", profile_name)
 
     async def set_frequency(self, freq: int) -> Dict[str, Any]:
         """Set frequency (overclock/underclock)."""
@@ -335,51 +428,19 @@ class LuxOSAPI:
 
     async def enable_hashboard(self, board: int) -> Dict[str, Any]:
         """Enable specific hashboard."""
-        # Ensure we have a session ID
-        if not self._luxos_session_id:
-            await self._get_luxos_session_id()
-        
-        if not self._luxos_session_id:
-            raise LuxOSAPIError("No LuxOS session ID available for hashboard command")
-        
-        parameter = f"{self._luxos_session_id},{board}"
-        return await self._execute_command("enableboard", parameter)
+        return await self._execute_session_command("enableboard", str(board))
 
     async def disable_hashboard(self, board: int) -> Dict[str, Any]:
         """Disable specific hashboard."""
-        # Ensure we have a session ID
-        if not self._luxos_session_id:
-            await self._get_luxos_session_id()
-        
-        if not self._luxos_session_id:
-            raise LuxOSAPIError("No LuxOS session ID available for hashboard command")
-        
-        parameter = f"{self._luxos_session_id},{board}"
-        return await self._execute_command("disableboard", parameter)
+        return await self._execute_session_command("disableboard", str(board))
 
     async def pause_mining(self) -> Dict[str, Any]:
         """Pause mining operations using curtail sleep."""
-        # Ensure we have a session ID
-        if not self._luxos_session_id:
-            await self._get_luxos_session_id()
-        
-        if not self._luxos_session_id:
-            raise LuxOSAPIError("No LuxOS session ID available for curtail command")
-        
-        parameter = f"{self._luxos_session_id},sleep"
-        return await self._execute_command("curtail", parameter)
+        return await self._execute_curtail_command("sleep")
 
     async def resume_mining(self) -> Dict[str, Any]:
         """Resume mining operations using curtail wakeup."""
-        # Ensure we have a session ID
-        if not self._luxos_session_id:
-            await self._get_luxos_session_id()
-        
-        if not self._luxos_session_id:
-            raise LuxOSAPIError("No LuxOS session ID available for curtail command")
-        
-        parameter = f"{self._luxos_session_id},wakeup"
-        return await self._execute_command("curtail", parameter)
+        return await self._execute_curtail_command("wakeup")
 
     async def restart_miner(self) -> Dict[str, Any]:
         """Restart the miner."""
