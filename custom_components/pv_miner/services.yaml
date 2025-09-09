@@ -96,3 +96,17 @@ set_pool:
         number:
           min: 0
           max: 10
+
+sleep_miner:
+  name: Sleep Miner
+  description: Put the miner into sleep mode (curtail sleep) - reduces power consumption to minimum while keeping the miner responsive
+  target:
+    entity:
+      domain: switch
+
+wake_miner:
+  name: Wake Miner
+  description: Wake up the miner from sleep mode (curtail wakeup) - restores normal mining operations
+  target:
+    entity:
+      domain: switch

@@ -14,7 +14,9 @@ from .const import (
     SERVICE_SET_POOL,
     SERVICE_SET_POWER_LIMIT,
     SERVICE_SET_POWER_PROFILE,
+    SERVICE_SLEEP_MINER,
     SERVICE_SOLAR_MAX,
+    SERVICE_WAKE_MINER,
 )
 from .luxos_api import LuxOSAPIError
 
@@ -49,6 +51,14 @@ SET_POOL_SCHEMA = vol.Schema({
     vol.Required("pool_user"): cv.string,
     vol.Optional("pool_password", default="x"): cv.string,
     vol.Optional("priority", default=0): vol.All(vol.Coerce(int), vol.Range(min=0, max=10)),
+})
+
+SLEEP_MINER_SCHEMA = vol.Schema({
+    vol.Required("entity_id"): cv.entity_ids,
+})
+
+WAKE_MINER_SCHEMA = vol.Schema({
+    vol.Required("entity_id"): cv.entity_ids,
 })
 
 
@@ -119,6 +129,24 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 priority=priority
             )
 
+    async def handle_sleep_miner(call: ServiceCall) -> None:
+        """Handle sleep miner service call."""
+        entity_ids = call.data["entity_id"]
+        
+        for entity_id in entity_ids:
+            await _execute_service_for_entity(
+                hass, entity_id, _sleep_miner
+            )
+
+    async def handle_wake_miner(call: ServiceCall) -> None:
+        """Handle wake miner service call."""
+        entity_ids = call.data["entity_id"]
+        
+        for entity_id in entity_ids:
+            await _execute_service_for_entity(
+                hass, entity_id, _wake_miner
+            )
+
     # Register services
     hass.services.async_register(
         DOMAIN,
@@ -160,6 +188,20 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         SERVICE_SET_POOL,
         handle_set_pool,
         schema=SET_POOL_SCHEMA,
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SLEEP_MINER,
+        handle_sleep_miner,
+        schema=SLEEP_MINER_SCHEMA,
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_WAKE_MINER,
+        handle_wake_miner,
+        schema=WAKE_MINER_SCHEMA,
     )
 
 
@@ -246,3 +288,15 @@ async def _set_pool(api, pool_url: str, pool_user: str, pool_password: str, prio
     """Add and switch to a new mining pool."""
     await api.add_pool(pool_url, pool_user, pool_password, priority)
     _LOGGER.info("Added mining pool: %s", pool_url)
+
+
+async def _sleep_miner(api) -> None:
+    """Put the miner into sleep mode (curtail sleep)."""
+    await api.pause_mining()
+    _LOGGER.info("Miner put into sleep mode (curtail sleep)")
+
+
+async def _wake_miner(api) -> None:
+    """Wake up the miner from sleep mode (curtail wakeup)."""
+    await api.resume_mining()
+    _LOGGER.info("Miner woken up from sleep mode (curtail wakeup)")
