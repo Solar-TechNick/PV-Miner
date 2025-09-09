@@ -71,8 +71,9 @@ class PVMinerPowerProfile(CoordinatorEntity, SelectEntity):
         self._api = api
         self._config_entry_id = config_entry_id
         self._miner_name = miner_name
-        self._current_profile = "310MHz"  # Default to current profile
-        self._available_profiles = ["default", "310MHz"]  # Will be updated dynamically
+        self._current_profile = "default"  # Start with default profile
+        self._available_profiles = ["default"]  # Will be updated dynamically
+        self._profile_details = {}  # Store profile details for display
         
         self._attr_name = f"{miner_name} Power Profile"
         self._attr_unique_id = f"{config_entry_id}_power_profile"
@@ -94,6 +95,34 @@ class PVMinerPowerProfile(CoordinatorEntity, SelectEntity):
     def current_option(self) -> Optional[str]:
         """Return the current power profile."""
         return self._current_profile
+
+    @property
+    def extra_state_attributes(self) -> Dict[str, Any]:
+        """Return additional state attributes."""
+        attributes = {}
+        
+        # Add current profile details if available
+        if self._current_profile and self._current_profile in self._profile_details:
+            details = self._profile_details[self._current_profile]
+            attributes.update({
+                "frequency_mhz": details.get("frequency"),
+                "hashrate_ths": details.get("hashrate"),
+                "power_watts": details.get("watts"),
+                "voltage": details.get("voltage"),
+                "step": details.get("step"),
+                "description": details.get("description")
+            })
+        
+        # Add summary of all available profiles
+        if self._profile_details:
+            profiles_summary = {}
+            for name, details in self._profile_details.items():
+                profiles_summary[name] = details.get("description", name)
+            attributes["available_profiles"] = profiles_summary
+            
+        attributes["total_profiles"] = len(self._available_profiles)
+        
+        return attributes
 
     async def async_select_option(self, option: str) -> None:
         """Select a power profile."""
@@ -120,13 +149,34 @@ class PVMinerPowerProfile(CoordinatorEntity, SelectEntity):
     async def async_update_available_profiles(self) -> None:
         """Update the list of available profiles from the miner."""
         try:
+            # Get profile names
             profiles = await self._api.get_available_profiles()
-            if profiles:
+            
+            # Get detailed profile information
+            profile_details = await self._api.get_all_profiles_with_details()
+            
+            if profiles and profile_details:
+                self._available_profiles = profiles
+                self._profile_details = profile_details
+                self._attr_options = profiles
+                
+                _LOGGER.info(f"Updated {len(profiles)} dynamic profiles from miner")
+                _LOGGER.debug("Available profiles: %s", profiles)
+                
+                # Log some example profile details
+                for i, profile_name in enumerate(profiles[:3]):  # Show first 3
+                    if profile_name in profile_details:
+                        details = profile_details[profile_name]
+                        _LOGGER.debug(f"  {profile_name}: {details['description']}")
+                        
+            elif profiles:
+                # Fallback: just use profile names without details
                 self._available_profiles = profiles
                 self._attr_options = profiles
-                _LOGGER.debug("Updated available profiles: %s", profiles)
+                _LOGGER.info(f"Updated {len(profiles)} profiles (no details available)")
+                
         except Exception as e:
-            _LOGGER.debug("Could not update available profiles: %s", e)
+            _LOGGER.warning("Could not update available profiles: %s", e)
             # Keep default profiles if API call fails
 
 

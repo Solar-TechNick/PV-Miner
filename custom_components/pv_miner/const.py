@@ -25,15 +25,8 @@ DEFAULT_MAX_POWER = 4200
 LUXOS_LOGIN_ENDPOINT = "/cgi-bin/luxcgi"
 LUXOS_API_ENDPOINT = "/cgi-bin/luxcgi"
 
-# Power profiles mapping
-POWER_PROFILES = {
-    "max_power": {"name": "Max Power", "overclock": 2, "description": "+2 overclock profile for peak performance"},
-    "balanced": {"name": "Balanced", "overclock": 0, "description": "Default profile for optimal efficiency"},
-    "ultra_eco": {"name": "Ultra Eco", "overclock": -2, "description": "-2 underclock profile for minimal power consumption"},
-    "night_30": {"name": "Night Mode (30%)", "overclock": -8, "description": "30% power for quiet night operation"},
-    "night_15": {"name": "Night Mode (15%)", "overclock": -12, "description": "15% power for ultra-quiet operation"},
-    "standby": {"name": "Standby", "overclock": -16, "description": "Minimum power standby mode"}
-}
+# Power profiles are now loaded dynamically from the miner via LuxOS API
+# No fixed POWER_PROFILES constant needed - profiles are discovered at runtime
 
 # Solar operation modes
 SOLAR_MODES = {

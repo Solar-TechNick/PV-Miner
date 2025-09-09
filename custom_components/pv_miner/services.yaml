@@ -1,24 +1,17 @@
 set_power_profile:
   name: Set Power Profile
-  description: Set the power profile for the miner
+  description: Set the power profile for the miner (profiles are loaded dynamically from miner)
   target:
     entity:
       domain: switch
   fields:
     profile:
       name: Profile
-      description: Power profile to set
-      example: "max_power"
+      description: Power profile to set (e.g., "default", "310MHz", "435MHz", "560MHz", "685MHz", "810MHz")
+      example: "default"
       required: true
       selector:
-        select:
-          options:
-            - "max_power"
-            - "balanced" 
-            - "ultra_eco"
-            - "night_30"
-            - "night_15"
-            - "standby"
+        text:
 
 set_power_limit:
   name: Set Power Limit

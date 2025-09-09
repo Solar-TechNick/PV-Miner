@@ -395,20 +395,22 @@ class LuxOSAPI:
         return await self.get_stats()
 
     async def get_available_profiles(self) -> List[str]:
-        """Get list of available profiles."""
+        """Get list of available profiles dynamically from the miner."""
         try:
-            # Try to get profile list directly from LuxOS
-            result = await self._execute_command("profilelist", "")
+            # Use the 'profiles' command to get all available profiles with details
+            result = await self._execute_command("profiles", "")
             
             if "PROFILES" in result and result["PROFILES"]:
                 profiles = []
                 for profile_info in result["PROFILES"]:
-                    if "Profile" in profile_info:
-                        profiles.append(profile_info["Profile"])
-                _LOGGER.debug(f"Found profiles via profilelist: {profiles}")
-                return profiles
+                    if "Profile Name" in profile_info:
+                        profiles.append(profile_info["Profile Name"])
+                
+                if profiles:
+                    _LOGGER.info(f"Found {len(profiles)} dynamic profiles from miner: {profiles}")
+                    return profiles
         except Exception as e:
-            _LOGGER.debug(f"profilelist command failed: {e}")
+            _LOGGER.warning(f"Dynamic profile discovery failed: {e}")
         
         # Fallback: check only known working profiles for S21+
         available_profiles = []
@@ -419,13 +421,13 @@ class LuxOSAPI:
                 result = await self._execute_command("profileget", profile_name)
                 if "PROFILE" in result and result["PROFILE"]:
                     available_profiles.append(profile_name)
-                    _LOGGER.debug(f"Found profile: {profile_name}")
+                    _LOGGER.debug(f"Found fallback profile: {profile_name}")
             except Exception as e:
-                _LOGGER.debug(f"Profile {profile_name} check failed: {e}")
+                _LOGGER.debug(f"Fallback profile {profile_name} check failed: {e}")
         
         # If no profiles found, return default safe list
         if not available_profiles:
-            _LOGGER.info("No profiles detected, using default list for S21+")
+            _LOGGER.warning("No profiles detected, using default list for S21+")
             available_profiles = ["default", "310MHz"]
         
         return available_profiles
@@ -433,6 +435,33 @@ class LuxOSAPI:
     async def get_profile_details(self, profile_name: str) -> Dict[str, Any]:
         """Get details for a specific profile."""
         return await self._execute_command("profileget", profile_name)
+
+    async def get_all_profiles_with_details(self) -> Dict[str, Dict[str, Any]]:
+        """Get all available profiles with their detailed information."""
+        try:
+            result = await self._execute_command("profiles", "")
+            
+            if "PROFILES" in result and result["PROFILES"]:
+                profiles_dict = {}
+                for profile_info in result["PROFILES"]:
+                    if "Profile Name" in profile_info:
+                        profile_name = profile_info["Profile Name"]
+                        profiles_dict[profile_name] = {
+                            "name": profile_name,
+                            "frequency": profile_info.get("Frequency", 0),
+                            "hashrate": profile_info.get("Hashrate", 0),
+                            "watts": profile_info.get("Watts", 0),
+                            "voltage": profile_info.get("Voltage", 0),
+                            "step": profile_info.get("Step", "0"),
+                            "description": f"{profile_info.get('Frequency', 0)}MHz - {profile_info.get('Hashrate', 0)}TH/s - {profile_info.get('Watts', 0)}W"
+                        }
+                
+                _LOGGER.debug(f"Retrieved detailed info for {len(profiles_dict)} profiles")
+                return profiles_dict
+        except Exception as e:
+            _LOGGER.warning(f"Failed to get detailed profile information: {e}")
+        
+        return {}
 
     async def set_profile(self, profile_name: str, board: int = None) -> Dict[str, Any]:
         """Set power profile. LuxOS profileset applies to appropriate boards automatically."""

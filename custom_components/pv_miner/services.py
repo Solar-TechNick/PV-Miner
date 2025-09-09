@@ -8,7 +8,6 @@ from homeassistant.helpers import config_validation as cv
 
 from .const import (
     DOMAIN,
-    POWER_PROFILES,
     SERVICE_ECO_MODE,
     SERVICE_EMERGENCY_STOP,
     SERVICE_SET_POOL,
@@ -25,7 +24,7 @@ _LOGGER = logging.getLogger(__name__)
 # Service schemas
 SET_POWER_PROFILE_SCHEMA = vol.Schema({
     vol.Required("entity_id"): cv.entity_ids,
-    vol.Required("profile"): vol.In(list(POWER_PROFILES.keys())),
+    vol.Required("profile"): cv.string,  # Accept any valid profile name dynamically
 })
 
 SET_POWER_LIMIT_SCHEMA = vol.Schema({
@@ -235,12 +234,14 @@ async def _execute_service_for_entity(
 
 
 async def _set_power_profile(api, profile: str) -> None:
-    """Set power profile via API."""
-    profile_config = POWER_PROFILES[profile]
-    overclock = profile_config["overclock"]
-    
-    await api.set_frequency(overclock)
-    _LOGGER.info("Set power profile '%s' (overclock: %d)", profile_config["name"], overclock)
+    """Set power profile via API using dynamic LuxOS profiles."""
+    try:
+        # Use the LuxOS profile system directly
+        await api.set_profile(profile)
+        _LOGGER.info("Set power profile to '%s'", profile)
+    except Exception as e:
+        _LOGGER.error("Failed to set power profile '%s': %s", profile, e)
+        raise
 
 
 async def _set_power_limit(api, power_limit: int) -> None:
