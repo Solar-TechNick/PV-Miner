@@ -396,20 +396,37 @@ class LuxOSAPI:
 
     async def get_available_profiles(self) -> List[str]:
         """Get list of available profiles."""
+        try:
+            # Try to get profile list directly from LuxOS
+            result = await self._execute_command("profilelist", "")
+            
+            if "PROFILES" in result and result["PROFILES"]:
+                profiles = []
+                for profile_info in result["PROFILES"]:
+                    if "Profile" in profile_info:
+                        profiles.append(profile_info["Profile"])
+                _LOGGER.debug(f"Found profiles via profilelist: {profiles}")
+                return profiles
+        except Exception as e:
+            _LOGGER.debug(f"profilelist command failed: {e}")
+        
+        # Fallback: check only known working profiles for S21+
         available_profiles = []
+        known_s21_profiles = ["default", "310MHz"]
         
-        # Known profiles to check
-        possible_profiles = ["default", "310MHz", "400MHz", "500MHz", "600MHz", "700MHz"]
-        
-        for profile_name in possible_profiles:
+        for profile_name in known_s21_profiles:
             try:
                 result = await self._execute_command("profileget", profile_name)
                 if "PROFILE" in result and result["PROFILE"]:
                     available_profiles.append(profile_name)
                     _LOGGER.debug(f"Found profile: {profile_name}")
-            except Exception:
-                # Profile doesn't exist, continue
-                pass
+            except Exception as e:
+                _LOGGER.debug(f"Profile {profile_name} check failed: {e}")
+        
+        # If no profiles found, return default safe list
+        if not available_profiles:
+            _LOGGER.info("No profiles detected, using default list for S21+")
+            available_profiles = ["default", "310MHz"]
         
         return available_profiles
 

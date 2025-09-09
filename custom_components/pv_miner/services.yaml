@@ -1,0 +1,98 @@
+set_power_profile:
+  name: Set Power Profile
+  description: Set the power profile for the miner
+  target:
+    entity:
+      domain: switch
+  fields:
+    profile:
+      name: Profile
+      description: Power profile to set
+      example: "max_power"
+      required: true
+      selector:
+        select:
+          options:
+            - "max_power"
+            - "balanced" 
+            - "ultra_eco"
+            - "night_30"
+            - "night_15"
+            - "standby"
+
+set_power_limit:
+  name: Set Power Limit
+  description: Set the power limit for the miner in watts
+  target:
+    entity:
+      domain: switch
+  fields:
+    power_limit:
+      name: Power Limit
+      description: Power limit in watts
+      example: 3000
+      required: true
+      selector:
+        number:
+          min: 500
+          max: 50000
+          unit_of_measurement: "W"
+
+emergency_stop:
+  name: Emergency Stop
+  description: Emergency stop all mining operations
+  target:
+    entity:
+      domain: switch
+
+solar_max:
+  name: Solar Max
+  description: Set to solar max mode (4200W)
+  target:
+    entity:
+      domain: switch
+
+eco_mode:
+  name: Eco Mode
+  description: Set to eco mode (1500W)
+  target:
+    entity:
+      domain: switch
+
+set_pool:
+  name: Set Mining Pool
+  description: Add and switch to a new mining pool
+  target:
+    entity:
+      domain: switch
+  fields:
+    pool_url:
+      name: Pool URL
+      description: Mining pool URL
+      example: "stratum+tcp://pool.example.com:4444"
+      required: true
+      selector:
+        text:
+    pool_user:
+      name: Pool User
+      description: Mining pool username
+      example: "your_username"
+      required: true
+      selector:
+        text:
+    pool_password:
+      name: Pool Password
+      description: Mining pool password
+      example: "x"
+      default: "x"
+      selector:
+        text:
+    priority:
+      name: Priority
+      description: Pool priority (0 = highest)
+      example: 0
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 10
