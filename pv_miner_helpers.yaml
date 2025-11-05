@@ -5,8 +5,8 @@
 #
 # OR add the contents below directly to your configuration.yaml
 
-# Progressive Power Control Toggle
+# Progressive Hashboard Control Toggle
 pv_miner_progressive_hashboard:
-  name: Progressive Power Control
-  icon: mdi:transmission-tower
+  name: Progressive Hashboard Control
+  icon: mdi:chip
   initial: off

@@ -473,12 +473,90 @@ class LuxOSAPI:
         return await self._execute_command("frequencyset", str(freq))
 
     async def enable_hashboard(self, board: int) -> Dict[str, Any]:
-        """Enable specific hashboard."""
-        return await self._execute_session_command("enableboard", str(board))
+        """Enable specific hashboard (pauses ATM temporarily)."""
+        return await self._hashboard_control_with_atm("enableboard", board)
 
     async def disable_hashboard(self, board: int) -> Dict[str, Any]:
-        """Disable specific hashboard."""
-        return await self._execute_session_command("disableboard", str(board))
+        """Disable specific hashboard (pauses ATM temporarily)."""
+        return await self._hashboard_control_with_atm("disableboard", board)
+
+    async def _hashboard_control_with_atm(self, command: str, board: int) -> Dict[str, Any]:
+        """Control hashboard by temporarily pausing ATM."""
+        max_retries = 2
+        last_error = None
+
+        for attempt in range(max_retries):
+            try:
+                # Ensure we have a session ID
+                if not self._luxos_session_id:
+                    await self._get_luxos_session_id()
+
+                if not self._luxos_session_id:
+                    raise LuxOSAPIError(f"No LuxOS session ID available for {command}")
+
+                # Step 1: Disable ATM
+                _LOGGER.debug(f"Pausing ATM for {command} on board {board}")
+                atm_disable = await self._execute_command("atmset", f"{self._luxos_session_id},enabled=false")
+
+                # Check if ATM was disabled successfully
+                if "STATUS" in atm_disable and atm_disable["STATUS"]:
+                    status = atm_disable["STATUS"][0]
+                    if status.get("STATUS") != "S":
+                        _LOGGER.warning(f"ATM disable warning: {status.get('Msg')}")
+
+                # Small delay to let ATM stop
+                await asyncio.sleep(0.5)
+
+                # Step 2: Execute hashboard command
+                _LOGGER.debug(f"Executing {command} for board {board}")
+                board_param = f"{self._luxos_session_id},{board}"
+                result = await self._execute_command(command, board_param)
+
+                # Check command result
+                if "STATUS" in result and result["STATUS"]:
+                    status_info = result["STATUS"][0]
+                    if status_info.get("STATUS") == "S":
+                        _LOGGER.info(f"{command} board {board} successful")
+                    else:
+                        error_msg = status_info.get("Msg", f"Unknown {command} error")
+
+                        # Handle session expiry
+                        if "Invalid session_id" in error_msg:
+                            _LOGGER.warning(f"Session expired during {command}, retrying (attempt {attempt + 1})")
+                            self._luxos_session_id = None
+                            continue
+                        else:
+                            _LOGGER.error(f"{command} board {board} failed: {error_msg}")
+                            # Continue to re-enable ATM even if command failed
+
+                # Step 3: Re-enable ATM
+                _LOGGER.debug("Re-enabling ATM")
+                atm_enable = await self._execute_command("atmset", f"{self._luxos_session_id},enabled=true")
+
+                # Check if ATM was re-enabled
+                if "STATUS" in atm_enable and atm_enable["STATUS"]:
+                    status = atm_enable["STATUS"][0]
+                    if status.get("STATUS") != "S":
+                        _LOGGER.warning(f"ATM re-enable warning: {status.get('Msg')}")
+
+                return result
+
+            except Exception as e:
+                last_error = e
+                if attempt == max_retries - 1:
+                    break
+
+                _LOGGER.warning(f"{command} board {board} attempt {attempt + 1} failed: {e}")
+                self._luxos_session_id = None
+
+                # Try to re-enable ATM even after error
+                try:
+                    if self._luxos_session_id:
+                        await self._execute_command("atmset", f"{self._luxos_session_id},enabled=true")
+                except:
+                    pass
+
+        raise LuxOSAPIError(f"All {command} board {board} attempts failed. Last error: {last_error}")
 
     async def pause_mining(self) -> Dict[str, Any]:
         """Pause mining operations using curtail sleep."""

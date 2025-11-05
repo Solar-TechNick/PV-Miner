@@ -209,10 +209,10 @@ automation:
         data:
           message: "🌱 Step 3: VERY LOW (310MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
 
-  # Wake Up & Start: 500W+
+  # Wake Up & Start: 500W+ with 1 Hashboard
   - id: solar_mining_wake
-    alias: "⏰ Solar Mining - Wake (500W+)"
-    description: "Wake up miner at 500W with low power profile"
+    alias: "⏰ Solar Mining - Wake (500W+) - 1 Board"
+    description: "Wake up miner with only hashboard 0 at 500W"
     trigger:
       - platform: numeric_state
         entity_id: sensor.pro3em_total_active_power
@@ -228,24 +228,28 @@ automation:
         target:
           entity_id: switch.s19_miner
       - delay: "00:00:30"
+      - service: switch.turn_on
+        target:
+          entity_id: switch.s19_hashboard_0
+      - service: switch.turn_off
+        target:
+          entity_id: switch.s19_hashboard_1
+      - service: switch.turn_off
+        target:
+          entity_id: switch.s19_hashboard_2
       - service: pv_miner.set_power_profile
         data:
           profile: "310MHz"
         target:
           entity_id: switch.s19_miner
-      - service: number.set_value
-        target:
-          entity_id: number.s19_power_limit
-        data:
-          value: 700
       - service: notify.mobile_app_your_phone
         data:
-          message: "⏰ WAKE UP - 700W Power Limit - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+          message: "⏰ WAKE UP - Board 0 only (310MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
 
-  # Progressive Power Control: 500W-800W (Low Power ~700W)
-  - id: solar_mining_low_power
-    alias: "☀️ Solar Mining - 500W-800W (Low Power)"
-    description: "Run at low power (700W) when solar is 500-800W"
+  # Progressive Hashboard Control: 500W-800W (1 Hashboard)
+  - id: solar_mining_1_board
+    alias: "☀️ Solar Mining - 500W-800W (1 Board)"
+    description: "Run with 1 hashboard at 500-800W"
     trigger:
       - platform: numeric_state
         entity_id: sensor.pro3em_total_active_power
@@ -261,11 +265,15 @@ automation:
         entity_id: input_boolean.pv_miner_progressive_hashboard
         state: "on"
     action:
-      - service: number.set_value
+      - service: switch.turn_on
         target:
-          entity_id: number.s19_power_limit
-        data:
-          value: 700
+          entity_id: switch.s19_hashboard_0
+      - service: switch.turn_off
+        target:
+          entity_id: switch.s19_hashboard_1
+      - service: switch.turn_off
+        target:
+          entity_id: switch.s19_hashboard_2
       - service: pv_miner.set_power_profile
         data:
           profile: "310MHz"
@@ -273,12 +281,12 @@ automation:
           entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
-          message: "🌱 LOW POWER - 700W Limit - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+          message: "🌱 1 BOARD (Board 0) - 310MHz - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
 
-  # Progressive Power Control: 800W-1000W (Medium Power ~950W)
-  - id: solar_mining_medium_power
-    alias: "☀️ Solar Mining - 800W-1000W (Medium Power)"
-    description: "Run at medium power (950W) when solar is 800-1000W"
+  # Progressive Hashboard Control: 800W-1000W (2 Hashboards)
+  - id: solar_mining_2_boards
+    alias: "☀️ Solar Mining - 800W-1000W (2 Boards)"
+    description: "Enable 2 hashboards at 800W"
     trigger:
       - platform: numeric_state
         entity_id: sensor.pro3em_total_active_power
@@ -294,11 +302,14 @@ automation:
         entity_id: input_boolean.pv_miner_progressive_hashboard
         state: "on"
     action:
-      - service: number.set_value
+      - service: switch.turn_on
         target:
-          entity_id: number.s19_power_limit
-        data:
-          value: 950
+          entity_id:
+            - switch.s19_hashboard_0
+            - switch.s19_hashboard_1
+      - service: switch.turn_off
+        target:
+          entity_id: switch.s19_hashboard_2
       - service: pv_miner.set_power_profile
         data:
           profile: "310MHz"
@@ -306,12 +317,12 @@ automation:
           entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
-          message: "⚡ MEDIUM POWER - 950W Limit - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+          message: "⚡ 2 BOARDS (0+1) - 310MHz - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
 
-  # Progressive Power Control: 1000W+ (High Power ~1200W)
-  - id: solar_mining_high_power
-    alias: "☀️ Solar Mining - 1000W+ (High Power)"
-    description: "Run at higher power (1200W) when solar exceeds 1000W"
+  # Progressive Hashboard Control: 1000W+ (3 Hashboards)
+  - id: solar_mining_3_boards
+    alias: "☀️ Solar Mining - 1000W+ (3 Boards)"
+    description: "Enable all 3 hashboards at 1000W"
     trigger:
       - platform: numeric_state
         entity_id: sensor.pro3em_total_active_power
@@ -327,11 +338,12 @@ automation:
         entity_id: input_boolean.pv_miner_progressive_hashboard
         state: "on"
     action:
-      - service: number.set_value
+      - service: switch.turn_on
         target:
-          entity_id: number.s19_power_limit
-        data:
-          value: 1200
+          entity_id:
+            - switch.s19_hashboard_0
+            - switch.s19_hashboard_1
+            - switch.s19_hashboard_2
       - service: pv_miner.set_power_profile
         data:
           profile: "310MHz"
@@ -339,7 +351,7 @@ automation:
           entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
-          message: "🔥 HIGH POWER - 1200W Limit - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+          message: "🔥 3 BOARDS (All) - 310MHz - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
 
   # Sleep: Below 500W
   - id: solar_mining_sleep

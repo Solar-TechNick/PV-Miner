@@ -1,18 +1,18 @@
-# Progressive Power Control Setup
+# Progressive Hashboard Control Setup
 
-This guide explains how to enable the progressive power control feature for your PV Miner.
+This guide explains how to enable the progressive hashboard control feature for your PV Miner.
 
-## What is Progressive Power Control?
+## What is Progressive Hashboard Control?
 
-Progressive power control automatically adjusts the miner's power limit based on available solar power:
+Progressive hashboard control automatically enables/disables individual hashboards based on available solar power:
 
-- **500W-800W**: Low power mode (~700W limit)
-- **800W-1000W**: Medium power mode (~950W limit)
-- **1000W+**: High power mode (~1200W limit)
+- **500W-800W**: Only Hashboard 0 runs (~33% power)
+- **800W-1000W**: Hashboards 0+1 run (~66% power)
+- **1000W+**: All 3 hashboards run (100% power)
 
-This provides finer-grained power control than just using frequency profiles alone, allowing the miner to scale its consumption more precisely with your solar production.
+This provides finer-grained power control than just using frequency profiles alone.
 
-**Note**: Due to LuxOS firmware limitations, individual hashboards cannot be disabled while the miner is actively running. Instead, this feature uses power limits to achieve similar results.
+**How it works**: The integration temporarily pauses ATM (Advanced Thermal Management), switches the hashboards, then re-enables ATM automatically.
 
 ## Setup Instructions
 
@@ -105,18 +105,18 @@ Import these dashboards into Home Assistant as usual.
 
 When enabled:
 
-- The miner will automatically adjust its power limit based on solar power
-- At 500W-800W, power limit is 700W
-- At 800W-1000W, power limit is 950W
-- At 1000W+, power limit is 1200W
+- The miner will automatically manage hashboards based on solar power
+- At 500W-800W, only 1 board runs (Board 0)
+- At 800W-1000W, 2 boards run (Boards 0+1)
+- At 1000W+, all 3 boards run
 
 ### Disable Progressive Control
 
 Turn the toggle **OFF** to disable the feature:
 
-- The miner will use normal power limits
+- All 3 hashboards will remain active at all times
 - Only the frequency/power profile automations will control power usage
-- You can manually adjust power limits via the dashboard
+- Manual hashboard control via dashboard still works
 
 ## Troubleshooting
 
@@ -151,10 +151,10 @@ To test if it's working:
 1. Turn on **Progressive Hashboard Control** toggle
 2. Check your solar power sensor value
 3. The automations should trigger based on your current solar power:
-   - If solar is 600W → Power limit should be 700W
-   - If solar is 900W → Power limit should be 950W
-   - If solar is 1200W → Power limit should be 1200W
-4. Check the power limit entity: [number.s19_power_limit](number.s19_power_limit)
+   - If solar is 600W → Only Board 0 should be enabled
+   - If solar is 900W → Boards 0+1 should be enabled
+   - If solar is 1200W → All 3 boards should be enabled
+4. Check the hashboard switches in your dashboard or via States
 5. Check the automation traces to see if they're triggering correctly
 
 ## Default Behavior

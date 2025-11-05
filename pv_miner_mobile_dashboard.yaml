@@ -186,11 +186,11 @@ views:
               yellow: 5000
               red: 7000
 
-      # Progressive Power Control Toggle
+      # Progressive Hashboard Toggle
       - type: entity
         entity: input_boolean.pv_miner_progressive_hashboard
-        name: "Progressive Power"
-        icon: mdi:transmission-tower
+        name: "Progressive Hashboards"
+        icon: mdi:chip
 
       # Hashboard Status
       - type: horizontal-stack
