@@ -134,7 +134,7 @@ gh release create v1.0.15 --title "v1.0.15" --notes "Release notes" --latest
 
 ## Important Implementation Details
 
-**Current Version**: 1.0.14 (see manifest.json)
+**Current Version**: 1.0.23 (see manifest.json)
 
 **Language Convention**: German for user-facing strings (translations/de.json, translations/en.json), English for code and technical documentation.
 
@@ -175,6 +175,25 @@ gh release create v1.0.15 --title "v1.0.15" --notes "Release notes" --latest
 - Profiles are loaded dynamically from miner on first connection
 - Check logs for `profileget` command results
 - Ensure miner has LuxOS profiles configured (use LuxOS web interface to verify)
+
+## Recent Version History
+
+- **v1.0.23**: Added connection logging (shows miner IP on startup)
+- **v1.0.22**: Comprehensive "already active" error suppression at all API layers
+- **v1.0.21**: Initial error handling improvements for "already active" errors
+- **v1.0.20**: Auto-wake miner before hashboard control operations
+- **v1.0.19**: HACS validation fixes and repository restructuring
+
+## Error Handling Best Practices
+
+**"Miner is already active" errors**: This is expected behavior when calling resume_mining() on an active miner. As of v1.0.22, these are properly suppressed at all layers:
+- TCP API layer: Logs as DEBUG instead of ERROR
+- HTTP API layer: Logs as DEBUG instead of ERROR
+- Execute command layer: Logs as DEBUG instead of ERROR
+- Curtail command layer: Skips WARNING logs
+- Switch layer: Gracefully handles the response
+
+**Hashboard control when miner is asleep**: As of v1.0.20, hashboard switches automatically call resume_mining() before enable/disable operations to prevent "curtail mode is idle or sleep" errors.
 
 ## Future Development Areas
 
