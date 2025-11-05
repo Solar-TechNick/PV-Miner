@@ -219,8 +219,10 @@ class PVMinerHashboardSwitch(CoordinatorEntity, SwitchEntity):
             try:
                 await self._api.resume_mining()
                 _LOGGER.debug("Woke up miner before enabling hashboard %d", self._board_num)
-            except Exception as wake_err:
-                _LOGGER.debug("Miner already awake or wake failed: %s", wake_err)
+            except LuxOSAPIError as wake_err:
+                # "Miner is already active" is expected and OK, other errors should be logged
+                if "already active" not in str(wake_err).lower():
+                    _LOGGER.debug("Wake miner returned: %s", wake_err)
 
             # Now enable the hashboard
             await self._api.enable_hashboard(self._board_num)
@@ -239,8 +241,10 @@ class PVMinerHashboardSwitch(CoordinatorEntity, SwitchEntity):
             try:
                 await self._api.resume_mining()
                 _LOGGER.debug("Woke up miner before disabling hashboard %d", self._board_num)
-            except Exception as wake_err:
-                _LOGGER.debug("Miner already awake or wake failed: %s", wake_err)
+            except LuxOSAPIError as wake_err:
+                # "Miner is already active" is expected and OK, other errors should be logged
+                if "already active" not in str(wake_err).lower():
+                    _LOGGER.debug("Wake miner returned: %s", wake_err)
 
             # Now disable the hashboard
             await self._api.disable_hashboard(self._board_num)
