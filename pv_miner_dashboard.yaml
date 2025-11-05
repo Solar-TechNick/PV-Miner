@@ -3,377 +3,378 @@
 # Replace "antminer_s21" with your actual miner entity names
 
 title: ☀️ PV Miner Control Center
-path: pv-miner
-icon: mdi:bitcoin
-theme: Backend-selected
-panel: false
-badges: []
-cards:
-  # Header Card with Overall Status
-  - type: horizontal-stack
+views:
+  - title: Mining Control
+    path: pv-miner
+    icon: mdi:bitcoin
+    theme: Backend-selected
+    badges: []
     cards:
-      - type: entity
-        entity: switch.antminer_s21_miner
-        name: "🔥 Main Miner"
-        icon: mdi:pickaxe
-        tap_action:
-          action: toggle
-      - type: entity
-        entity: sensor.antminer_s21_hashrate
-        name: "⚡ Hashrate"
-        icon: mdi:speedometer
-      - type: entity
-        entity: sensor.antminer_s21_power_consumption
-        name: "🔋 Power"
-        icon: mdi:flash
-      - type: entity
-        entity: sensor.antminer_s21_efficiency
-        name: "📊 Efficiency"
-        icon: mdi:gauge
-
-  # Solar Power & Mining Status Section
-  - type: vertical-stack
-    cards:
-      - type: markdown
-        content: |
-          ## 🌞 Solar Mining Status
-      
-      # Solar Power Card (you'll need to replace with your actual solar sensors)
+      # Header Card with Overall Status
       - type: horizontal-stack
         cards:
           - type: entity
-            entity: sensor.solar_power_production  # Replace with your solar sensor
-            name: "☀️ Solar Production"
-            icon: mdi:solar-power
+            entity: switch.antminer_s21_miner
+            name: "🔥 Main Miner"
+            icon: mdi:pickaxe
+            tap_action:
+              action: toggle
           - type: entity
-            entity: sensor.battery_soc  # Replace with your battery sensor
-            name: "🔋 Battery SOC"
-            icon: mdi:battery
-          - type: entity
-            entity: number.antminer_s21_available_solar_power
-            name: "⚡ Available Solar"
-            icon: mdi:solar-panel
-
-  # Quick Control Buttons
-  - type: vertical-stack
-    cards:
-      - type: markdown
-        content: |
-          ## 🎛️ Quick Controls
-      
-      - type: horizontal-stack
-        cards:
-          - type: button
-            tap_action:
-              action: call-service
-              service: pv_miner.wake_miner
-              target:
-                entity_id: switch.antminer_s21_miner
-            name: "⏰ Wake"
-            icon: mdi:power-on
-            show_state: false
-          
-          - type: button
-            tap_action:
-              action: call-service
-              service: pv_miner.sleep_miner
-              target:
-                entity_id: switch.antminer_s21_miner
-            name: "😴 Sleep"
-            icon: mdi:power-sleep
-            show_state: false
-          
-          - type: button
-            tap_action:
-              action: call-service
-              service: pv_miner.solar_max
-              target:
-                entity_id: switch.antminer_s21_miner
-            name: "☀️ Solar Max"
-            icon: mdi:weather-sunny
-            show_state: false
-          
-          - type: button
-            tap_action:
-              action: call-service
-              service: pv_miner.eco_mode
-              target:
-                entity_id: switch.antminer_s21_miner
-            name: "🌱 Eco Mode"
-            icon: mdi:leaf
-            show_state: false
-
-  # Profile Management Section
-  - type: vertical-stack
-    cards:
-      - type: markdown
-        content: |
-          ## ⚙️ Power Profile Management
-      
-      - type: horizontal-stack
-        cards:
-          - type: entity
-            entity: select.antminer_s21_power_profile
-            name: "🎚️ Current Profile"
-            icon: mdi:tune
-          
-          - type: entity
-            entity: select.antminer_s21_solar_mode
-            name: "☀️ Solar Mode"
-            icon: mdi:solar-power-variant
-      
-      # Profile Quick Select Buttons
-      - type: horizontal-stack
-        cards:
-          - type: button
-            tap_action:
-              action: call-service
-              service: pv_miner.set_power_profile
-              service_data:
-                profile: "310MHz"
-              target:
-                entity_id: switch.antminer_s21_miner
-            name: "🔋 Eco\n310MHz"
-            icon: mdi:battery-charging-low
-            show_state: false
-          
-          - type: button
-            tap_action:
-              action: call-service
-              service: pv_miner.set_power_profile
-              service_data:
-                profile: "560MHz"
-              target:
-                entity_id: switch.antminer_s21_miner
-            name: "⚖️ Balanced\n560MHz"
-            icon: mdi:scale-balance
-            show_state: false
-          
-          - type: button
-            tap_action:
-              action: call-service
-              service: pv_miner.set_power_profile
-              service_data:
-                profile: "default"
-              target:
-                entity_id: switch.antminer_s21_miner
-            name: "🔥 Default\n710MHz"
-            icon: mdi:fire
-            show_state: false
-          
-          - type: button
-            tap_action:
-              action: call-service
-              service: pv_miner.set_power_profile
-              service_data:
-                profile: "810MHz"
-              target:
-                entity_id: switch.antminer_s21_miner
-            name: "⚡ High\n810MHz"
-            icon: mdi:lightning-bolt
-            show_state: false
-
-  # Detailed Mining Statistics
-  - type: vertical-stack
-    cards:
-      - type: markdown
-        content: |
-          ## 📊 Mining Performance
-      
-      - type: horizontal-stack
-        cards:
-          - type: gauge
             entity: sensor.antminer_s21_hashrate
-            name: "Hashrate"
-            unit: "TH/s"
-            min: 0
-            max: 300
-            severity:
-              green: 200
-              yellow: 100
-              red: 0
-          
-          - type: gauge
+            name: "⚡ Hashrate"
+            icon: mdi:speedometer
+          - type: entity
             entity: sensor.antminer_s21_power_consumption
-            name: "Power Usage"
-            unit: "W"
-            min: 0
-            max: 8500
-            severity:
-              green: 0
-              yellow: 5000
-              red: 7000
-      
-      # Temperature Monitoring
-      - type: horizontal-stack
-        cards:
-          - type: entity
-            entity: sensor.antminer_s21_temperature
-            name: "🌡️ Main Temp"
-            icon: mdi:thermometer
-          
-          - type: entity
-            entity: sensor.antminer_s21_hashboard_0_temperature
-            name: "🔥 Board 0"
-            icon: mdi:chip
-          
-          - type: entity
-            entity: sensor.antminer_s21_hashboard_1_temperature
-            name: "🔥 Board 1"
-            icon: mdi:chip
-          
-          - type: entity
-            entity: sensor.antminer_s21_hashboard_2_temperature
-            name: "🔥 Board 2"
-            icon: mdi:chip
-
-  # Hashboard Individual Controls
-  - type: vertical-stack
-    cards:
-      - type: markdown
-        content: |
-          ## 🎛️ Individual Hashboard Control
-      
-      - type: horizontal-stack
-        cards:
-          - type: entity
-            entity: switch.antminer_s21_hashboard_0
-            name: "Board 0"
-            icon: mdi:chip
-            tap_action:
-              action: toggle
-          
-          - type: entity
-            entity: switch.antminer_s21_hashboard_1
-            name: "Board 1"
-            icon: mdi:chip
-            tap_action:
-              action: toggle
-          
-          - type: entity
-            entity: switch.antminer_s21_hashboard_2
-            name: "Board 2"
-            icon: mdi:chip
-            tap_action:
-              action: toggle
-
-  # Number Controls
-  - type: vertical-stack
-    cards:
-      - type: markdown
-        content: |
-          ## 🔧 Advanced Controls
-      
-      - type: horizontal-stack
-        cards:
-          - type: entity
-            entity: number.antminer_s21_power_limit
-            name: "⚡ Power Limit"
+            name: "🔋 Power"
             icon: mdi:flash
-          
           - type: entity
-            entity: number.antminer_s21_frequency_offset
-            name: "🎚️ Frequency Offset"
-            icon: mdi:tune
+            entity: sensor.antminer_s21_efficiency
+            name: "📊 Efficiency"
+            icon: mdi:gauge
 
-  # Additional Information
-  - type: vertical-stack
-    cards:
-      - type: markdown
-        content: |
-          ## ℹ️ System Information
-      
-      - type: horizontal-stack
+      # Solar Power & Mining Status Section
+      - type: vertical-stack
         cards:
-          - type: entity
-            entity: sensor.antminer_s21_uptime
-            name: "⏱️ Uptime"
-            icon: mdi:clock
-          
-          - type: entity
-            entity: sensor.antminer_s21_mining_pool
-            name: "🏊 Mining Pool"
-            icon: mdi:pool
-          
-          - type: entity
-            entity: sensor.antminer_s21_fan_speed
-            name: "💨 Fan Speed"
-            icon: mdi:fan
+          - type: markdown
+            content: |
+              ## 🌞 Solar Mining Status
 
-  # Historical Charts (requires history integration)
-  - type: vertical-stack
-    cards:
-      - type: markdown
-        content: |
-          ## 📈 Performance History
-      
-      - type: history-graph
-        entities:
-          - entity: sensor.antminer_s21_hashrate
-          - entity: sensor.antminer_s21_power_consumption
-          - entity: sensor.antminer_s21_temperature
-        hours_to_show: 24
-        refresh_interval: 300
-        title: "Mining Performance (24h)"
+          # Solar Power Card (you'll need to replace with your actual solar sensors)
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: sensor.pro3em_total_active_power
+                name: "☀️ Solar Production"
+                icon: mdi:solar-power
+              - type: entity
+                entity: sensor.battery_soc  # Replace with your battery sensor
+                name: "🔋 Battery SOC"
+                icon: mdi:battery
+              - type: entity
+                entity: number.antminer_s21_available_solar_power
+                name: "⚡ Available Solar"
+                icon: mdi:solar-panel
 
-  # Solar Integration Charts
-  - type: vertical-stack
-    cards:
-      - type: markdown
-        content: |
-          ## ☀️ Solar Integration History
-      
-      # You'll need to replace these with your actual solar sensors
-      - type: history-graph
-        entities:
-          - entity: sensor.solar_power_production  # Replace with your sensor
-          - entity: sensor.antminer_s21_power_consumption
-          - entity: sensor.battery_soc  # Replace with your sensor
-        hours_to_show: 24
-        refresh_interval: 300
-        title: "Solar vs Mining Power (24h)"
+      # Quick Control Buttons
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## 🎛️ Quick Controls
 
-  # Service Call Card for Advanced Users
-  - type: vertical-stack
-    cards:
-      - type: markdown
-        content: |
-          ## 🛠️ Advanced Service Calls
-          Use these for automation or advanced control
-      
-      - type: button
-        tap_action:
-          action: call-service
-          service: pv_miner.emergency_stop
-          target:
-            entity_id: switch.antminer_s21_miner
-        name: "🚨 Emergency Stop"
-        icon: mdi:stop-circle
-        show_state: false
-        hold_action:
-          action: more-info
+          - type: horizontal-stack
+            cards:
+              - type: button
+                tap_action:
+                  action: call-service
+                  service: pv_miner.wake_miner
+                  target:
+                    entity_id: switch.antminer_s21_miner
+                name: "⏰ Wake"
+                icon: mdi:power-on
+                show_state: false
 
-  # Status Summary Card
-  - type: vertical-stack
-    cards:
-      - type: markdown
-        content: |
-          ## 📋 Quick Status Summary
-          
-          **🎯 Current Operation:**
-          - Miner: {{ states('switch.antminer_s21_miner') | title }}
-          - Profile: {{ states('select.antminer_s21_power_profile') }}
-          - Hashrate: {{ states('sensor.antminer_s21_hashrate') }} TH/s
-          - Power: {{ states('sensor.antminer_s21_power_consumption') }} W
-          - Efficiency: {{ states('sensor.antminer_s21_efficiency') }} J/TH
-          - Temperature: {{ states('sensor.antminer_s21_temperature') }}°C
-          
-          **⚡ Power Management:**
-          - Available Solar: {{ states('number.antminer_s21_available_solar_power') }} W
-          - Power Limit: {{ states('number.antminer_s21_power_limit') }} W
-          - Solar Mode: {{ states('select.antminer_s21_solar_mode') }}
-          
-          **📊 Performance:**
-          - Uptime: {{ (states('sensor.antminer_s21_uptime') | int / 3600) | round(1) }} hours
-          - Pool: {{ states('sensor.antminer_s21_mining_pool') }}
-          - Fan Speed: {{ states('sensor.antminer_s21_fan_speed') }} RPM
+              - type: button
+                tap_action:
+                  action: call-service
+                  service: pv_miner.sleep_miner
+                  target:
+                    entity_id: switch.antminer_s21_miner
+                name: "😴 Sleep"
+                icon: mdi:power-sleep
+                show_state: false
+
+              - type: button
+                tap_action:
+                  action: call-service
+                  service: pv_miner.solar_max
+                  target:
+                    entity_id: switch.antminer_s21_miner
+                name: "☀️ Solar Max"
+                icon: mdi:weather-sunny
+                show_state: false
+
+              - type: button
+                tap_action:
+                  action: call-service
+                  service: pv_miner.eco_mode
+                  target:
+                    entity_id: switch.antminer_s21_miner
+                name: "🌱 Eco Mode"
+                icon: mdi:leaf
+                show_state: false
+
+      # Profile Management Section
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## ⚙️ Power Profile Management
+
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: select.antminer_s21_power_profile
+                name: "🎚️ Current Profile"
+                icon: mdi:tune
+
+              - type: entity
+                entity: select.antminer_s21_solar_mode
+                name: "☀️ Solar Mode"
+                icon: mdi:solar-power-variant
+
+          # Profile Quick Select Buttons
+          - type: horizontal-stack
+            cards:
+              - type: button
+                tap_action:
+                  action: call-service
+                  service: pv_miner.set_power_profile
+                  service_data:
+                    profile: "310MHz"
+                  target:
+                    entity_id: switch.antminer_s21_miner
+                name: "🔋 Eco\n310MHz"
+                icon: mdi:battery-charging-low
+                show_state: false
+
+              - type: button
+                tap_action:
+                  action: call-service
+                  service: pv_miner.set_power_profile
+                  service_data:
+                    profile: "560MHz"
+                  target:
+                    entity_id: switch.antminer_s21_miner
+                name: "⚖️ Balanced\n560MHz"
+                icon: mdi:scale-balance
+                show_state: false
+
+              - type: button
+                tap_action:
+                  action: call-service
+                  service: pv_miner.set_power_profile
+                  service_data:
+                    profile: "default"
+                  target:
+                    entity_id: switch.antminer_s21_miner
+                name: "🔥 Default\n710MHz"
+                icon: mdi:fire
+                show_state: false
+
+              - type: button
+                tap_action:
+                  action: call-service
+                  service: pv_miner.set_power_profile
+                  service_data:
+                    profile: "810MHz"
+                  target:
+                    entity_id: switch.antminer_s21_miner
+                name: "⚡ High\n810MHz"
+                icon: mdi:lightning-bolt
+                show_state: false
+
+      # Detailed Mining Statistics
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## 📊 Mining Performance
+
+          - type: horizontal-stack
+            cards:
+              - type: gauge
+                entity: sensor.antminer_s21_hashrate
+                name: "Hashrate"
+                unit: "TH/s"
+                min: 0
+                max: 300
+                severity:
+                  green: 200
+                  yellow: 100
+                  red: 0
+
+              - type: gauge
+                entity: sensor.antminer_s21_power_consumption
+                name: "Power Usage"
+                unit: "W"
+                min: 0
+                max: 8500
+                severity:
+                  green: 0
+                  yellow: 5000
+                  red: 7000
+
+          # Temperature Monitoring
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: sensor.antminer_s21_temperature
+                name: "🌡️ Main Temp"
+                icon: mdi:thermometer
+
+              - type: entity
+                entity: sensor.antminer_s21_hashboard_0_temperature
+                name: "🔥 Board 0"
+                icon: mdi:chip
+
+              - type: entity
+                entity: sensor.antminer_s21_hashboard_1_temperature
+                name: "🔥 Board 1"
+                icon: mdi:chip
+
+              - type: entity
+                entity: sensor.antminer_s21_hashboard_2_temperature
+                name: "🔥 Board 2"
+                icon: mdi:chip
+
+      # Hashboard Individual Controls
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## 🎛️ Individual Hashboard Control
+
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: switch.antminer_s21_hashboard_0
+                name: "Board 0"
+                icon: mdi:chip
+                tap_action:
+                  action: toggle
+
+              - type: entity
+                entity: switch.antminer_s21_hashboard_1
+                name: "Board 1"
+                icon: mdi:chip
+                tap_action:
+                  action: toggle
+
+              - type: entity
+                entity: switch.antminer_s21_hashboard_2
+                name: "Board 2"
+                icon: mdi:chip
+                tap_action:
+                  action: toggle
+
+      # Number Controls
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## 🔧 Advanced Controls
+
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: number.antminer_s21_power_limit
+                name: "⚡ Power Limit"
+                icon: mdi:flash
+
+              - type: entity
+                entity: number.antminer_s21_frequency_offset
+                name: "🎚️ Frequency Offset"
+                icon: mdi:tune
+
+      # Additional Information
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## ℹ️ System Information
+
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: sensor.antminer_s21_uptime
+                name: "⏱️ Uptime"
+                icon: mdi:clock
+
+              - type: entity
+                entity: sensor.antminer_s21_mining_pool
+                name: "🏊 Mining Pool"
+                icon: mdi:pool
+
+              - type: entity
+                entity: sensor.antminer_s21_fan_speed
+                name: "💨 Fan Speed"
+                icon: mdi:fan
+
+      # Historical Charts (requires history integration)
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## 📈 Performance History
+
+          - type: history-graph
+            entities:
+              - entity: sensor.antminer_s21_hashrate
+              - entity: sensor.antminer_s21_power_consumption
+              - entity: sensor.antminer_s21_temperature
+            hours_to_show: 24
+            refresh_interval: 300
+            title: "Mining Performance (24h)"
+
+      # Solar Integration Charts
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## ☀️ Solar Integration History
+
+          # Solar power history chart
+          - type: history-graph
+            entities:
+              - entity: sensor.pro3em_total_active_power
+              - entity: sensor.antminer_s21_power_consumption
+              - entity: sensor.battery_soc  # Replace with your battery sensor if available
+            hours_to_show: 24
+            refresh_interval: 300
+            title: "Solar vs Mining Power (24h)"
+
+      # Service Call Card for Advanced Users
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## 🛠️ Advanced Service Calls
+              Use these for automation or advanced control
+
+          - type: button
+            tap_action:
+              action: call-service
+              service: pv_miner.emergency_stop
+              target:
+                entity_id: switch.antminer_s21_miner
+            name: "🚨 Emergency Stop"
+            icon: mdi:stop-circle
+            show_state: false
+            hold_action:
+              action: more-info
+
+      # Status Summary Card
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## 📋 Quick Status Summary
+
+              **🎯 Current Operation:**
+              - Miner: {{ states('switch.antminer_s21_miner') | title }}
+              - Profile: {{ states('select.antminer_s21_power_profile') }}
+              - Hashrate: {{ states('sensor.antminer_s21_hashrate') }} TH/s
+              - Power: {{ states('sensor.antminer_s21_power_consumption') }} W
+              - Efficiency: {{ states('sensor.antminer_s21_efficiency') }} J/TH
+              - Temperature: {{ states('sensor.antminer_s21_temperature') }}°C
+
+              **⚡ Power Management:**
+              - Available Solar: {{ states('number.antminer_s21_available_solar_power') }} W
+              - Power Limit: {{ states('number.antminer_s21_power_limit') }} W
+              - Solar Mode: {{ states('select.antminer_s21_solar_mode') }}
+
+              **📊 Performance:**
+              - Uptime: {{ (states('sensor.antminer_s21_uptime') | int / 3600) | round(1) }} hours
+              - Pool: {{ states('sensor.antminer_s21_mining_pool') }}
+              - Fan Speed: {{ states('sensor.antminer_s21_fan_speed') }} RPM
