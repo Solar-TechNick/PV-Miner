@@ -134,7 +134,7 @@ gh release create v1.0.15 --title "v1.0.15" --notes "Release notes" --latest
 
 ## Important Implementation Details
 
-**Current Version**: 1.0.23 (see manifest.json)
+**Current Version**: 1.0.25 (see manifest.json)
 
 **Language Convention**: German for user-facing strings (translations/de.json, translations/en.json), English for code and technical documentation.
 
@@ -178,6 +178,8 @@ gh release create v1.0.15 --title "v1.0.15" --notes "Release notes" --latest
 
 ## Recent Version History
 
+- **v1.0.25**: Added hashboard control verification and LuxOS firmware limitation detection
+- **v1.0.24**: Added detailed diagnostic logging for hashboard control operations
 - **v1.0.23**: Added connection logging (shows miner IP on startup)
 - **v1.0.22**: Comprehensive "already active" error suppression at all API layers
 - **v1.0.21**: Initial error handling improvements for "already active" errors
@@ -194,6 +196,8 @@ gh release create v1.0.15 --title "v1.0.15" --notes "Release notes" --latest
 - Switch layer: Gracefully handles the response
 
 **Hashboard control when miner is asleep**: As of v1.0.20, hashboard switches automatically call resume_mining() before enable/disable operations to prevent "curtail mode is idle or sleep" errors.
+
+**Hashboard control not working (v1.0.25)**: Some LuxOS firmware versions (e.g., 2025.10.15.191043) have non-functional `enableboard`/`disableboard` commands - they return success but don't actually change board state. The integration now verifies board state changes and logs a warning if the firmware doesn't support this feature. **Recommended workaround**: Use power profile switching instead of per-board control for solar following. Profiles like "260MHz" vs lower frequencies can achieve similar power management without requiring per-board control.
 
 ## Future Development Areas
 

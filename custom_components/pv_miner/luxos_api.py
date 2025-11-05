@@ -549,7 +549,28 @@ class LuxOSAPI:
                             _LOGGER.error(f"{command} board {board} failed: {error_msg}")
                             # Continue to re-enable ATM even if command failed
 
-                # Step 3: Re-enable ATM
+                # Step 3: Verify the change took effect before re-enabling ATM
+                _LOGGER.debug(f"Verifying {command} for board {board}")
+                await asyncio.sleep(1)  # Give the board time to change state
+
+                verification = await self._execute_command("devs", "")
+                expected_state = command == "enableboard"  # True for enable, False for disable
+
+                if "DEVS" in verification and len(verification["DEVS"]) > board:
+                    board_data = verification["DEVS"][board]
+                    actual_enabled = board_data.get("Enabled", "N") == "Y"
+
+                    if actual_enabled != expected_state:
+                        _LOGGER.warning(
+                            f"Hashboard {board} {command} command succeeded, but board state did not change. "
+                            f"Expected Enabled={expected_state}, got Enabled={actual_enabled}. "
+                            f"This LuxOS firmware version may not support per-board control. "
+                            f"Consider using power profiles instead for solar following."
+                        )
+                    else:
+                        _LOGGER.info(f"Verified: Board {board} is now {'enabled' if expected_state else 'disabled'}")
+
+                # Step 4: Re-enable ATM
                 _LOGGER.debug("Re-enabling ATM")
                 atm_enable = await self._execute_command("atmset", f"{self._luxos_session_id},enabled=true")
 
