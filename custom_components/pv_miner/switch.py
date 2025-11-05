@@ -214,6 +214,7 @@ class PVMinerHashboardSwitch(CoordinatorEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the hashboard on."""
+        _LOGGER.info(f"Attempting to turn ON hashboard {self._board_num} on {self._miner_name}")
         try:
             # First ensure miner is awake (not in sleep/idle mode)
             try:
@@ -225,10 +226,14 @@ class PVMinerHashboardSwitch(CoordinatorEntity, SwitchEntity):
                     _LOGGER.debug("Wake miner returned: %s", wake_err)
 
             # Now enable the hashboard
+            _LOGGER.debug(f"Calling enable_hashboard({self._board_num})")
             await self._api.enable_hashboard(self._board_num)
-            _LOGGER.info("Hashboard %d on miner %s turned on", self._board_num, self._miner_name)
+            _LOGGER.info("Hashboard %d on miner %s turned ON successfully", self._board_num, self._miner_name)
         except LuxOSAPIError as e:
             _LOGGER.error("Error turning on hashboard %d: %s", self._board_num, e)
+            raise
+        except Exception as e:
+            _LOGGER.error("Unexpected error turning on hashboard %d: %s", self._board_num, e, exc_info=True)
             raise
 
         # Request coordinator refresh
@@ -236,6 +241,7 @@ class PVMinerHashboardSwitch(CoordinatorEntity, SwitchEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the hashboard off."""
+        _LOGGER.info(f"Attempting to turn OFF hashboard {self._board_num} on {self._miner_name}")
         try:
             # First ensure miner is awake (not in sleep/idle mode)
             try:
@@ -247,10 +253,14 @@ class PVMinerHashboardSwitch(CoordinatorEntity, SwitchEntity):
                     _LOGGER.debug("Wake miner returned: %s", wake_err)
 
             # Now disable the hashboard
+            _LOGGER.debug(f"Calling disable_hashboard({self._board_num})")
             await self._api.disable_hashboard(self._board_num)
-            _LOGGER.info("Hashboard %d on miner %s turned off", self._board_num, self._miner_name)
+            _LOGGER.info("Hashboard %d on miner %s turned OFF successfully", self._board_num, self._miner_name)
         except LuxOSAPIError as e:
             _LOGGER.error("Error turning off hashboard %d: %s", self._board_num, e)
+            raise
+        except Exception as e:
+            _LOGGER.error("Unexpected error turning off hashboard %d: %s", self._board_num, e, exc_info=True)
             raise
 
         # Request coordinator refresh
