@@ -94,7 +94,11 @@ class LuxOSAPI:
                                 return data
                             else:
                                 error_msg = status.get("Msg", "Unknown error")
-                                _LOGGER.error(f"TCP API error: {error_msg}")
+                                # "Miner is already active" is expected for wakeup commands, not an error
+                                if "already active" in error_msg.lower():
+                                    _LOGGER.debug(f"TCP API: {error_msg} (expected)")
+                                else:
+                                    _LOGGER.error(f"TCP API error: {error_msg}")
                                 raise LuxOSAPIError(f"LuxOS API error: {error_msg}")
                     
                     # Some commands might not have STATUS section
@@ -114,7 +118,12 @@ class LuxOSAPI:
                 _LOGGER.error(f"TCP API connection refused to {self.host}:4028")
                 raise LuxOSAPIError("Connection refused - check if miner is running LuxOS")
             except Exception as e:
-                _LOGGER.error(f"TCP API unexpected error: {e}")
+                # Check if it's the "already active" error wrapped in an exception
+                error_str = str(e)
+                if "already active" in error_str.lower():
+                    _LOGGER.debug(f"TCP API: {error_str} (expected)")
+                else:
+                    _LOGGER.error(f"TCP API unexpected error: {e}")
                 raise LuxOSAPIError(f"TCP connection failed: {e}")
         
         # Run TCP call in thread pool to avoid blocking HA event loop
@@ -186,10 +195,14 @@ class LuxOSAPI:
         except LuxOSAPIError as e:
             last_error = f"HTTP API failed: {e}"
             _LOGGER.debug(last_error)
-        
+
         # All methods failed
         error_msg = f"All API methods failed. Last error: {last_error}"
-        _LOGGER.error(error_msg)
+        # Don't log "already active" as error - it's expected
+        if "already active" not in error_msg.lower():
+            _LOGGER.error(error_msg)
+        else:
+            _LOGGER.debug(error_msg + " (expected)")
         raise LuxOSAPIError(error_msg)
 
     async def _get_luxos_session_id(self) -> Optional[str]:
@@ -248,13 +261,17 @@ class LuxOSAPI:
                             _LOGGER.warning(f"Session expired, attempting to renew (attempt {attempt + 1})")
                             self._luxos_session_id = None  # Force session renewal
                             continue
+                        elif "already active" in error_msg.lower() and action == "wakeup":
+                            # Miner is already running - this is expected and OK
+                            _LOGGER.debug("Miner is already active (expected)")
+                            return result
                         elif "curtail mode is idle or sleep" in error_msg and action == "wakeup":
                             # The miner might already be awake or in transition
                             _LOGGER.info("Miner may already be awake or transitioning")
                             return result
                         elif "curtail mode is idle or sleep" in error_msg and action == "sleep":
                             # The miner might already be in sleep mode
-                            _LOGGER.info("Miner may already be in sleep mode")  
+                            _LOGGER.info("Miner may already be in sleep mode")
                             return result
                         else:
                             raise LuxOSAPIError(f"Curtail {action} failed: {error_msg}")
@@ -265,8 +282,11 @@ class LuxOSAPI:
                 last_error = e
                 if attempt == max_retries - 1:
                     break
-                    
-                _LOGGER.warning(f"Curtail {action} attempt {attempt + 1} failed: {e}")
+
+                # Don't log "already active" as warning - it's expected
+                error_str = str(e)
+                if "already active" not in error_str.lower():
+                    _LOGGER.warning(f"Curtail {action} attempt {attempt + 1} failed: {e}")
                 # Clear session ID to force renewal on next attempt
                 self._luxos_session_id = None
                 
