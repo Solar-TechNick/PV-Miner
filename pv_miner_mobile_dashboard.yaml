@@ -1,8 +1,8 @@
-# ☀️ PV Miner Mobile Dashboard
+# PV Miner Mobile Dashboard
 # Compact mobile-optimized dashboard for solar mining on-the-go
 # Replace "antminer_s21" with your actual miner entity names
 
-title: ☀️ PV Miner Mobile
+title: PV Miner Mobile
 views:
   - title: Mobile Control
     path: pv-miner-mobile

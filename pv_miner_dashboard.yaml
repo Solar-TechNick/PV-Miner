@@ -1,8 +1,8 @@
-# ☀️ PV Miner Dashboard
+# PV Miner Dashboard
 # Complete Home Assistant Dashboard for Solar Bitcoin Mining
 # Replace "antminer_s21" with your actual miner entity names
 
-title: ☀️ PV Miner Control Center
+title: PV Miner Control Center
 views:
   - title: Mining Control
     path: pv-miner
