@@ -186,6 +186,12 @@ views:
               yellow: 5000
               red: 7000
 
+      # Progressive Power Control Toggle
+      - type: entity
+        entity: input_boolean.pv_miner_progressive_hashboard
+        name: "Progressive Power"
+        icon: mdi:transmission-tower
+
       # Hashboard Status
       - type: horizontal-stack
         cards:
@@ -197,7 +203,7 @@ views:
               action: toggle
             icon: mdi:chip
 
-          - type: button  
+          - type: button
             entity: switch.s19_hashboard_1
             name: "B1"
             show_state: true

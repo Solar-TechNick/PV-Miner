@@ -235,6 +235,11 @@ views:
             content: |
               ## 🎛️ Individual Hashboard Control
 
+          - type: entity
+            entity: input_boolean.pv_miner_progressive_hashboard
+            name: "⚡ Progressive Power Control"
+            icon: mdi:transmission-tower
+
           - type: horizontal-stack
             cards:
               - type: entity

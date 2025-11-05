@@ -2,15 +2,22 @@
 # Smart Solar Bitcoin Mining Automations for Home Assistant
 # Copy these to your automations.yaml or create via UI
 
-# 1. Solar Power Based Mining Control
+# IMPORTANT: Add this to your configuration.yaml first:
+# input_boolean:
+#   pv_miner_progressive_hashboard:
+#     name: Progressive Hashboard Control
+#     icon: mdi:chip
+
+# 1. Solar Power Based Mining Control - 10 Steps (500W to 3500W)
 automation:
-  - id: solar_mining_high_power
-    alias: "☀️ Solar Mining - High Power Mode"
-    description: "Switch to high power mining when solar production is high"
+  # Step 10: 3200W - 3500W+ (Maximum Power)
+  - id: solar_mining_step_10
+    alias: "☀️ Solar Mining - Step 10 (3200W+)"
+    description: "Maximum power when solar is 3200W or more"
     trigger:
       - platform: numeric_state
-        entity_id: sensor.pro3em_total_active_power  # Replace with your solar sensor
-        above: 6000  # Watts - adjust based on your setup
+        entity_id: sensor.pro3em_total_active_power
+        above: 3200
         for:
           minutes: 5
     condition:
@@ -20,21 +27,22 @@ automation:
     action:
       - service: pv_miner.set_power_profile
         data:
-          profile: "810MHz"  # High power profile
+          profile: "810MHz"  # Maximum power profile
         target:
           entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone  # Optional notification
         data:
-          message: "🔥 Miner switched to HIGH POWER (810MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+          message: "🔥 Step 10: MAX POWER (810MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
 
-  - id: solar_mining_medium_power
-    alias: "⚖️ Solar Mining - Medium Power Mode"
-    description: "Switch to medium power when solar is moderate"
+  # Step 9: 2900W - 3200W
+  - id: solar_mining_step_9
+    alias: "☀️ Solar Mining - Step 9 (2900W-3200W)"
+    description: "Very high power at 2900-3200W"
     trigger:
       - platform: numeric_state
         entity_id: sensor.pro3em_total_active_power
-        above: 4000
-        below: 6000
+        above: 2900
+        below: 3200
         for:
           minutes: 5
     condition:
@@ -44,21 +52,72 @@ automation:
     action:
       - service: pv_miner.set_power_profile
         data:
-          profile: "default"  # Standard 710MHz profile
+          profile: "default"  # Default 710MHz profile
         target:
           entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
-          message: "⚖️ Miner switched to BALANCED (default) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+          message: "⚡ Step 9: HIGH POWER (default) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
 
-  - id: solar_mining_low_power
-    alias: "🌱 Solar Mining - Eco Mode"
-    description: "Switch to eco mode when solar production is low"
+  # Step 8: 2600W - 2900W
+  - id: solar_mining_step_8
+    alias: "☀️ Solar Mining - Step 8 (2600W-2900W)"
+    description: "High power at 2600-2900W"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 2600
+        below: 2900
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+    action:
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "685MHz"
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "⚡ Step 8: HIGH (685MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Step 7: 2300W - 2600W
+  - id: solar_mining_step_7
+    alias: "☀️ Solar Mining - Step 7 (2300W-2600W)"
+    description: "Medium-high power at 2300-2600W"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 2300
+        below: 2600
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+    action:
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "560MHz"
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "⚖️ Step 7: MEDIUM-HIGH (560MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Step 6: 2000W - 2300W
+  - id: solar_mining_step_6
+    alias: "☀️ Solar Mining - Step 6 (2000W-2300W)"
+    description: "Medium power at 2000-2300W"
     trigger:
       - platform: numeric_state
         entity_id: sensor.pro3em_total_active_power
         above: 2000
-        below: 4000
+        below: 2300
         for:
           minutes: 5
     condition:
@@ -68,37 +127,96 @@ automation:
     action:
       - service: pv_miner.set_power_profile
         data:
-          profile: "435MHz"  # Lower power profile
+          profile: "560MHz"
         target:
           entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
-          message: "🌱 Miner switched to ECO MODE (435MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+          message: "⚖️ Step 6: MEDIUM (560MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
 
-  - id: solar_mining_sleep_mode
-    alias: "😴 Solar Mining - Sleep Mode"
-    description: "Put miner to sleep when solar is very low"
+  # Step 5: 1700W - 2000W
+  - id: solar_mining_step_5
+    alias: "☀️ Solar Mining - Step 5 (1700W-2000W)"
+    description: "Medium-low power at 1700-2000W"
     trigger:
       - platform: numeric_state
         entity_id: sensor.pro3em_total_active_power
+        above: 1700
         below: 2000
         for:
-          minutes: 10
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
     action:
-      - service: pv_miner.sleep_miner
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "435MHz"
         target:
           entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
-          message: "😴 Miner put to SLEEP - Solar too low: {{ states('sensor.pro3em_total_active_power') }}W"
+          message: "🌱 Step 5: MEDIUM-LOW (435MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
 
-  - id: solar_mining_wake_up
-    alias: "⏰ Solar Mining - Wake Up"
-    description: "Wake up miner when solar production returns"
+  # Step 4: 1400W - 1700W
+  - id: solar_mining_step_4
+    alias: "☀️ Solar Mining - Step 4 (1400W-1700W)"
+    description: "Low power at 1400-1700W"
     trigger:
       - platform: numeric_state
         entity_id: sensor.pro3em_total_active_power
-        above: 2500
+        above: 1400
+        below: 1700
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+    action:
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "435MHz"
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "🌱 Step 4: LOW (435MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Step 3: 1100W - 1400W
+  - id: solar_mining_step_3
+    alias: "☀️ Solar Mining - Step 3 (1100W-1400W)"
+    description: "Very low power at 1100-1400W"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 1100
+        below: 1400
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+    action:
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "310MHz"
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "🌱 Step 3: VERY LOW (310MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Wake Up & Start: 500W+
+  - id: solar_mining_wake
+    alias: "⏰ Solar Mining - Wake (500W+)"
+    description: "Wake up miner at 500W with low power profile"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 500
         for:
           minutes: 5
     condition:
@@ -109,15 +227,137 @@ automation:
       - service: pv_miner.wake_miner
         target:
           entity_id: switch.s19_miner
-      - delay: "00:00:30"  # Wait for miner to wake up
+      - delay: "00:00:30"
       - service: pv_miner.set_power_profile
         data:
-          profile: "310MHz"  # Start with eco profile
+          profile: "310MHz"
+        target:
+          entity_id: switch.s19_miner
+      - service: number.set_value
+        target:
+          entity_id: number.s19_power_limit
+        data:
+          value: 700
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "⏰ WAKE UP - 700W Power Limit - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Progressive Power Control: 500W-800W (Low Power ~700W)
+  - id: solar_mining_low_power
+    alias: "☀️ Solar Mining - 500W-800W (Low Power)"
+    description: "Run at low power (700W) when solar is 500-800W"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 500
+        below: 800
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.pv_miner_progressive_hashboard
+        state: "on"
+    action:
+      - service: number.set_value
+        target:
+          entity_id: number.s19_power_limit
+        data:
+          value: 700
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "310MHz"
         target:
           entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
-          message: "⏰ Miner WOKEN UP and started in ECO mode - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+          message: "🌱 LOW POWER - 700W Limit - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Progressive Power Control: 800W-1000W (Medium Power ~950W)
+  - id: solar_mining_medium_power
+    alias: "☀️ Solar Mining - 800W-1000W (Medium Power)"
+    description: "Run at medium power (950W) when solar is 800-1000W"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 800
+        below: 1000
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.pv_miner_progressive_hashboard
+        state: "on"
+    action:
+      - service: number.set_value
+        target:
+          entity_id: number.s19_power_limit
+        data:
+          value: 950
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "310MHz"
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "⚡ MEDIUM POWER - 950W Limit - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Progressive Power Control: 1000W+ (High Power ~1200W)
+  - id: solar_mining_high_power
+    alias: "☀️ Solar Mining - 1000W+ (High Power)"
+    description: "Run at higher power (1200W) when solar exceeds 1000W"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 1000
+        below: 1100
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.pv_miner_progressive_hashboard
+        state: "on"
+    action:
+      - service: number.set_value
+        target:
+          entity_id: number.s19_power_limit
+        data:
+          value: 1200
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "310MHz"
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "🔥 HIGH POWER - 1200W Limit - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Sleep: Below 500W
+  - id: solar_mining_sleep
+    alias: "😴 Solar Mining - Sleep (Below 500W)"
+    description: "Sleep mode when solar drops below 500W"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        below: 500
+        for:
+          minutes: 10
+    action:
+      - service: pv_miner.sleep_miner
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "😴 SLEEP MODE - All boards off - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
 
 # 2. Battery Protection Automations
   - id: battery_protection_low
