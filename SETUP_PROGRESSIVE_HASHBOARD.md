@@ -6,9 +6,9 @@ This guide explains how to enable the progressive hashboard control feature for 
 
 Progressive hashboard control automatically enables/disables individual hashboards based on available solar power:
 
-- **500W-800W**: Only Hashboard 0 runs (~33% power)
-- **800W-1000W**: Hashboards 0+1 run (~66% power)
-- **1000W+**: All 3 hashboards run (100% power)
+- **500W-800W**: Only Hashboard 0 runs (17 TH/s @ 385MHz)
+- **800W-1000W**: Hashboards 0+1 run (48.1 TH/s @ 260MHz)
+- **1000W+**: All 3 hashboards run (default profile)
 
 This provides finer-grained power control than just using frequency profiles alone.
 
