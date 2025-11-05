@@ -70,15 +70,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     password = entry.data[CONF_PASSWORD]
     scan_interval = entry.options.get(CONF_SCAN_INTERVAL, entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL))
 
+    _LOGGER.info(f"Setting up PV Miner integration for miner at {host} (user: {username})")
+
     api = LuxOSAPI(host, username, password)
-    
+
     # Test connection
     try:
         if not await api.test_connection():
             _LOGGER.error("Cannot connect to miner at %s", host)
             return False
+        _LOGGER.info(f"Successfully connected to miner at {host}")
     except LuxOSAPIError as err:
-        _LOGGER.error("Error connecting to miner: %s", err)
+        _LOGGER.error("Error connecting to miner at %s: %s", host, err)
         return False
 
     # Create coordinator
