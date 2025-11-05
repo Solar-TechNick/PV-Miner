@@ -1,7 +1,0 @@
-{
-  "name": "PV Miner",
-  "content_in_root": false,
-  "render_readme": true,
-  "country": ["DE", "AT", "CH"],
-  "homeassistant": "2023.1.0"
-}
