@@ -1,0 +1,145 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "PV Miner Setup",
+        "description": "Configure your Antminer for solar mining",
+        "data": {
+          "host": "IP Address",
+          "name": "Miner Name",
+          "username": "Username",
+          "password": "Password"
+        },
+        "data_description": {
+          "host": "IP address of your Antminer (e.g., {example_host})",
+          "name": "Friendly name for your miner (e.g., {example_name})"
+        }
+      },
+      "power": {
+        "title": "Power Configuration",
+        "description": "Configure power limits and priority for {miner_name}",
+        "data": {
+          "min_power": "Minimum Power (W)",
+          "max_power": "Maximum Power (W)",
+          "priority": "Priority (1=highest)"
+        }
+      },
+      "intervals": {
+        "title": "Update Intervals",
+        "description": "Configure update intervals for {miner_name}",
+        "data": {
+          "scan_interval": "Scan Interval (seconds)",
+          "solar_scan_interval": "Solar Update Interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to miner. Check IP address and credentials.",
+      "invalid_power_range": "Minimum power must be less than maximum power.",
+      "unknown": "Unknown error occurred."
+    },
+    "abort": {
+      "already_configured": "Miner is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "PV Miner Options",
+        "data": {
+          "scan_interval": "Scan Interval (seconds)",
+          "solar_scan_interval": "Solar Update Interval (seconds)",
+          "min_power": "Minimum Power (W)",
+          "max_power": "Maximum Power (W)",
+          "priority": "Priority (1=highest)"
+        }
+      }
+    }
+  },
+  "services": {
+    "set_power_profile": {
+      "name": "Set Power Profile",
+      "description": "Set the power profile for the miner",
+      "fields": {
+        "entity_id": {
+          "name": "Miner",
+          "description": "The miner entity to control"
+        },
+        "profile": {
+          "name": "Profile",
+          "description": "Power profile to set"
+        }
+      }
+    },
+    "set_power_limit": {
+      "name": "Set Power Limit",
+      "description": "Set the power limit for the miner",
+      "fields": {
+        "entity_id": {
+          "name": "Miner",
+          "description": "The miner entity to control"
+        },
+        "power_limit": {
+          "name": "Power Limit",
+          "description": "Power limit in watts"
+        }
+      }
+    },
+    "emergency_stop": {
+      "name": "Emergency Stop",
+      "description": "Immediately stop all mining operations",
+      "fields": {
+        "entity_id": {
+          "name": "Miner",
+          "description": "The miner entity to stop"
+        }
+      }
+    },
+    "solar_max": {
+      "name": "Solar Max",
+      "description": "Set miner to maximum solar power mode (4200W)",
+      "fields": {
+        "entity_id": {
+          "name": "Miner",
+          "description": "The miner entity to control"
+        }
+      }
+    },
+    "eco_mode": {
+      "name": "Eco Mode",
+      "description": "Set miner to energy-efficient mode (1500W)",
+      "fields": {
+        "entity_id": {
+          "name": "Miner",
+          "description": "The miner entity to control"
+        }
+      }
+    },
+    "set_pool": {
+      "name": "Set Mining Pool",
+      "description": "Add and switch to a new mining pool",
+      "fields": {
+        "entity_id": {
+          "name": "Miner",
+          "description": "The miner entity to configure"
+        },
+        "pool_url": {
+          "name": "Pool URL",
+          "description": "Mining pool URL"
+        },
+        "pool_user": {
+          "name": "Pool User",
+          "description": "Mining pool username"
+        },
+        "pool_password": {
+          "name": "Pool Password",
+          "description": "Mining pool password (optional)"
+        },
+        "priority": {
+          "name": "Priority",
+          "description": "Pool priority (0-10, 0=highest)"
+        }
+      }
+    }
+  }
+}

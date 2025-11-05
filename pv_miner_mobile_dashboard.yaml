@@ -1,0 +1,281 @@
+# PV Miner Mobile Dashboard
+# Compact mobile-optimized dashboard for solar mining on-the-go
+# Replace "s19" with your actual miner entity names
+
+title: PV Miner Mobile
+views:
+  - title: Mobile Control
+    path: pv-miner-mobile
+    icon: mdi:cellphone
+    theme: Backend-selected
+    badges:
+      - entity: switch.s19_miner
+      - entity: sensor.s19_hashrate
+      - entity: sensor.s19_power_consumption
+    cards:
+      # Quick Status Row
+      - type: horizontal-stack
+        cards:
+          - type: button
+            entity: switch.s19_miner
+            name: "Miner"
+            show_state: true
+            tap_action:
+              action: toggle
+            hold_action:
+              action: more-info
+
+          - type: entity
+            entity: sensor.s19_hashrate
+            name: "TH/s"
+            icon: mdi:speedometer
+
+      # Power Status Row  
+      - type: horizontal-stack
+        cards:
+          - type: entity
+            entity: sensor.s19_power_consumption
+            name: "Power"
+            icon: mdi:flash
+
+          - type: entity
+            entity: sensor.s19_temperature
+            name: "Temp"
+            icon: mdi:thermometer
+
+      # Solar Status Row (replace with your sensors)
+      - type: horizontal-stack
+        cards:
+          - type: entity
+            entity: sensor.pro3em_total_active_power  # Replace
+            name: "Solar"
+            icon: mdi:solar-power
+
+          - type: entity
+            entity: sensor.battery_soc  # Replace  
+            name: "Battery"
+            icon: mdi:battery
+
+      # Quick Action Buttons
+      - type: horizontal-stack
+        cards:
+          - type: button
+            tap_action:
+              action: call-service
+              service: pv_miner.wake_miner
+              target:
+                entity_id: switch.s19_miner
+            name: "⏰"
+            show_state: false
+            icon: mdi:power-on
+
+          - type: button
+            tap_action:
+              action: call-service
+              service: pv_miner.sleep_miner
+              target:
+                entity_id: switch.s19_miner
+            name: "😴"
+            show_state: false
+            icon: mdi:power-sleep
+
+          - type: button
+            tap_action:
+              action: call-service
+              service: pv_miner.eco_mode
+              target:
+                entity_id: switch.s19_miner
+            name: "🌱"
+            show_state: false
+            icon: mdi:leaf
+
+          - type: button
+            tap_action:
+              action: call-service
+              service: pv_miner.solar_max
+              target:
+                entity_id: switch.s19_miner
+            name: "☀️"
+            show_state: false
+            icon: mdi:weather-sunny
+
+      # Profile Quick Select
+      - type: horizontal-stack
+        cards:
+          - type: button
+            tap_action:
+              action: call-service
+              service: pv_miner.set_power_profile
+              service_data:
+                profile: "310MHz"
+              target:
+                entity_id: switch.s19_miner
+            name: "Eco"
+            show_state: false
+            icon: mdi:battery-charging-low
+
+          - type: button
+            tap_action:
+              action: call-service
+              service: pv_miner.set_power_profile
+              service_data:
+                profile: "560MHz"
+              target:
+                entity_id: switch.s19_miner
+            name: "Mid"
+            show_state: false
+            icon: mdi:scale-balance
+
+          - type: button
+            tap_action:
+              action: call-service
+              service: pv_miner.set_power_profile
+              service_data:
+                profile: "default"
+              target:
+                entity_id: switch.s19_miner
+            name: "Std"
+            show_state: false
+            icon: mdi:fire
+
+          - type: button
+            tap_action:
+              action: call-service
+              service: pv_miner.set_power_profile
+              service_data:
+                profile: "810MHz"
+              target:
+                entity_id: switch.s19_miner
+            name: "Max"
+            show_state: false
+            icon: mdi:lightning-bolt
+
+      # Current Profile & Solar Mode
+      - type: horizontal-stack
+        cards:
+          - type: entity
+            entity: select.s19_power_profile
+            name: "Profile"
+
+          - type: entity
+            entity: select.s19_solar_mode
+            name: "Mode"
+
+      # Performance Gauges
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.s19_hashrate
+            name: "Hashrate"
+            unit: "TH/s"
+            min: 0
+            max: 300
+            severity:
+              green: 200
+              yellow: 100
+              red: 0
+
+          - type: gauge
+            entity: sensor.s19_power_consumption
+            name: "Power"
+            unit: "W"
+            min: 0
+            max: 8500
+            severity:
+              green: 0
+              yellow: 5000
+              red: 7000
+
+      # Progressive Hashboard Toggle
+      - type: entity
+        entity: input_boolean.pv_miner_progressive_hashboard
+        name: "Progressive Hashboards"
+        icon: mdi:chip
+
+      # Hashboard Status
+      - type: horizontal-stack
+        cards:
+          - type: button
+            entity: switch.s19_hashboard_0
+            name: "B0"
+            show_state: true
+            tap_action:
+              action: toggle
+            icon: mdi:chip
+
+          - type: button
+            entity: switch.s19_hashboard_1
+            name: "B1"
+            show_state: true
+            tap_action:
+              action: toggle
+            icon: mdi:chip
+
+          - type: button
+            entity: switch.s19_hashboard_2
+            name: "B2"
+            show_state: true
+            tap_action:
+              action: toggle
+            icon: mdi:chip
+
+      # Advanced Controls (Expandable)
+      - type: entities
+        title: "⚙️ Advanced"
+        show_header_toggle: false
+        state_color: true
+        entities:
+          - entity: number.s19_power_limit
+            name: "Power Limit"
+            icon: mdi:flash
+          - entity: number.s19_frequency_offset
+            name: "Freq Offset"
+            icon: mdi:tune
+          - entity: number.s19_available_solar_power
+            name: "Solar Available"
+            icon: mdi:solar-panel
+
+      # System Info (Collapsible)
+      - type: entities
+        title: "ℹ️ System"
+        show_header_toggle: false
+        state_color: true
+        entities:
+          - entity: sensor.s19_efficiency
+            name: "Efficiency"
+            icon: mdi:gauge
+          - entity: sensor.s19_uptime
+            name: "Uptime"
+            icon: mdi:clock
+          - entity: sensor.s19_fan_speed
+            name: "Fan Speed"
+            icon: mdi:fan
+          - entity: sensor.s19_mining_pool
+            name: "Pool"
+            icon: mdi:pool
+
+      # Emergency Stop (Confirmation Required)
+      - type: button
+        tap_action:
+          action: call-service
+          service: pv_miner.emergency_stop
+          target:
+            entity_id: switch.s19_miner
+        name: "🚨 Emergency Stop"
+        icon: mdi:stop-circle
+        show_state: false
+        hold_action:
+          action: more-info
+        confirmation:
+          text: "Are you sure you want to emergency stop the miner?"
+
+      # Quick Status Summary  
+      - type: markdown
+        content: |
+          **Status:** {{ states('switch.s19_miner') | title }} | 
+          **{{ states('sensor.s19_hashrate') }} TH/s** | 
+          **{{ states('sensor.s19_power_consumption') }} W** |
+          **{{ states('sensor.s19_temperature') }}°C**
+
+          Profile: **{{ states('select.s19_power_profile') }}** | 
+          Efficiency: **{{ states('sensor.s19_efficiency') }} J/TH**

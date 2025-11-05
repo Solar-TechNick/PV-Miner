@@ -1,0 +1,597 @@
+# ☀️ PV Miner Automation Examples
+# Smart Solar Bitcoin Mining Automations for Home Assistant
+# Copy these to your automations.yaml or create via UI
+
+# IMPORTANT: Add this to your configuration.yaml first:
+# input_boolean:
+#   pv_miner_progressive_hashboard:
+#     name: Progressive Hashboard Control
+#     icon: mdi:chip
+
+# 1. Solar Power Based Mining Control - 10 Steps (500W to 3500W)
+automation:
+  # Step 10: 3200W - 3500W+ (Maximum Power)
+  - id: solar_mining_step_10
+    alias: "☀️ Solar Mining - Step 10 (3200W+)"
+    description: "Maximum power when solar is 3200W or more"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 3200
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+    action:
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "810MHz"  # Maximum power profile
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone  # Optional notification
+        data:
+          message: "🔥 Step 10: MAX POWER (810MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Step 9: 2900W - 3200W
+  - id: solar_mining_step_9
+    alias: "☀️ Solar Mining - Step 9 (2900W-3200W)"
+    description: "Very high power at 2900-3200W"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 2900
+        below: 3200
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+    action:
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "default"  # Default 710MHz profile
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "⚡ Step 9: HIGH POWER (default) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Step 8: 2600W - 2900W
+  - id: solar_mining_step_8
+    alias: "☀️ Solar Mining - Step 8 (2600W-2900W)"
+    description: "High power at 2600-2900W"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 2600
+        below: 2900
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+    action:
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "685MHz"
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "⚡ Step 8: HIGH (685MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Step 7: 2300W - 2600W
+  - id: solar_mining_step_7
+    alias: "☀️ Solar Mining - Step 7 (2300W-2600W)"
+    description: "Medium-high power at 2300-2600W"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 2300
+        below: 2600
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+    action:
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "560MHz"
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "⚖️ Step 7: MEDIUM-HIGH (560MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Step 6: 2000W - 2300W
+  - id: solar_mining_step_6
+    alias: "☀️ Solar Mining - Step 6 (2000W-2300W)"
+    description: "Medium power at 2000-2300W"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 2000
+        below: 2300
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+    action:
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "560MHz"
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "⚖️ Step 6: MEDIUM (560MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Step 5: 1700W - 2000W
+  - id: solar_mining_step_5
+    alias: "☀️ Solar Mining - Step 5 (1700W-2000W)"
+    description: "Medium-low power at 1700-2000W"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 1700
+        below: 2000
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+    action:
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "435MHz"
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "🌱 Step 5: MEDIUM-LOW (435MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Step 4: 1400W - 1700W
+  - id: solar_mining_step_4
+    alias: "☀️ Solar Mining - Step 4 (1400W-1700W)"
+    description: "Low power at 1400-1700W"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 1400
+        below: 1700
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+    action:
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "435MHz"
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "🌱 Step 4: LOW (435MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Step 3: 1100W - 1400W
+  - id: solar_mining_step_3
+    alias: "☀️ Solar Mining - Step 3 (1100W-1400W)"
+    description: "Very low power at 1100-1400W"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 1100
+        below: 1400
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+    action:
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "310MHz"
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "🌱 Step 3: VERY LOW (310MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Wake Up & Start: 500W+ with 1 Hashboard
+  - id: solar_mining_wake
+    alias: "⏰ Solar Mining - Wake (500W+) - 1 Board"
+    description: "Wake up miner with only hashboard 0 at 500W - 17 TH/s @ 385MHz"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 500
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "off"
+    action:
+      - service: pv_miner.wake_miner
+        target:
+          entity_id: switch.s19_miner
+      - delay: "00:00:30"
+      - service: switch.turn_on
+        target:
+          entity_id: switch.s19_hashboard_0
+      - service: switch.turn_off
+        target:
+          entity_id: switch.s19_hashboard_1
+      - service: switch.turn_off
+        target:
+          entity_id: switch.s19_hashboard_2
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "385MHz"
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "⏰ WAKE UP - Board 0 only (17 TH/s @ 385MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Progressive Hashboard Control: 500W-800W (1 Hashboard - 17 TH/s)
+  - id: solar_mining_1_board
+    alias: "☀️ Solar Mining - 500W-800W (1 Board)"
+    description: "Run with 1 hashboard at 17 TH/s @ 385MHz"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 500
+        below: 800
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.pv_miner_progressive_hashboard
+        state: "on"
+    action:
+      - service: switch.turn_on
+        target:
+          entity_id: switch.s19_hashboard_0
+      - service: switch.turn_off
+        target:
+          entity_id: switch.s19_hashboard_1
+      - service: switch.turn_off
+        target:
+          entity_id: switch.s19_hashboard_2
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "385MHz"
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "🌱 1 BOARD - 17 TH/s @ 385MHz - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Progressive Hashboard Control: 800W-1000W (2 Hashboards - 48.1 TH/s)
+  - id: solar_mining_2_boards
+    alias: "☀️ Solar Mining - 800W-1000W (2 Boards)"
+    description: "Enable 2 hashboards at 48.1 TH/s @ 260MHz"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 800
+        below: 1000
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.pv_miner_progressive_hashboard
+        state: "on"
+    action:
+      - service: switch.turn_on
+        target:
+          entity_id:
+            - switch.s19_hashboard_0
+            - switch.s19_hashboard_1
+      - service: switch.turn_off
+        target:
+          entity_id: switch.s19_hashboard_2
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "260MHz"
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "⚡ 2 BOARDS - 48.1 TH/s @ 260MHz - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Progressive Hashboard Control: 1000W+ (3 Hashboards - Default)
+  - id: solar_mining_3_boards
+    alias: "☀️ Solar Mining - 1000W+ (3 Boards)"
+    description: "Enable all 3 hashboards at default profile"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 1000
+        below: 1100
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.pv_miner_progressive_hashboard
+        state: "on"
+    action:
+      - service: switch.turn_on
+        target:
+          entity_id:
+            - switch.s19_hashboard_0
+            - switch.s19_hashboard_1
+            - switch.s19_hashboard_2
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "default"
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "🔥 3 BOARDS - Full Power (default) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+  # Sleep: Below 500W
+  - id: solar_mining_sleep
+    alias: "😴 Solar Mining - Sleep (Below 500W)"
+    description: "Sleep mode when solar drops below 500W"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        below: 500
+        for:
+          minutes: 10
+    action:
+      - service: pv_miner.sleep_miner
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "😴 SLEEP MODE - All boards off - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
+
+# 2. Battery Protection Automations
+  - id: battery_protection_low
+    alias: "🔋 Battery Protection - Low SOC"
+    description: "Reduce mining power when battery is low"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.battery_soc  # Replace with your battery sensor
+        below: 30
+        for:
+          minutes: 5
+    action:
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "310MHz"  # Minimum power profile
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "🔋 BATTERY LOW ({{ states('sensor.battery_soc') }}%) - Miner switched to minimum power"
+
+  - id: battery_protection_critical
+    alias: "🚨 Battery Protection - Critical SOC"
+    description: "Emergency stop mining when battery is critically low"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.battery_soc
+        below: 20
+        for:
+          minutes: 2
+    action:
+      - service: pv_miner.sleep_miner
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "🚨 CRITICAL BATTERY ({{ states('sensor.battery_soc') }}%) - Miner EMERGENCY SLEEP!"
+          title: "⚡ PV Miner Emergency"
+
+# 3. Temperature Protection
+  - id: temperature_protection
+    alias: "🌡️ Temperature Protection"
+    description: "Reduce power when miner gets too hot"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.s19_temperature
+        above: 75  # Celsius - adjust based on your comfort level
+        for:
+          minutes: 2
+    action:
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "435MHz"  # Reduce to medium-low power
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "🌡️ HIGH TEMPERATURE ({{ states('sensor.s19_temperature') }}°C) - Reduced to 435MHz profile"
+
+  - id: temperature_emergency
+    alias: "🔥 Temperature Emergency"
+    description: "Emergency stop if temperature is dangerous"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.s19_temperature
+        above: 85  # Emergency temperature
+        for:
+          minutes: 1
+    action:
+      - service: pv_miner.emergency_stop
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "🔥 EMERGENCY TEMPERATURE ({{ states('sensor.s19_temperature') }}°C) - MINER STOPPED!"
+          title: "🚨 Miner Emergency"
+
+# 4. Time-Based Automations
+  - id: night_mode_schedule
+    alias: "🌙 Night Mode Schedule"
+    description: "Switch to quiet night mode after sunset"
+    trigger:
+      - platform: sun
+        event: sunset
+        offset: "+01:00:00"  # 1 hour after sunset
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+    action:
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "310MHz"  # Quiet, low power
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "🌙 Night mode activated - Miner switched to quiet 310MHz profile"
+
+  - id: morning_wake_up
+    alias: "🌅 Morning Wake Up"
+    description: "Prepare for solar mining after sunrise"
+    trigger:
+      - platform: sun
+        event: sunrise
+        offset: "-00:30:00"  # 30 minutes before sunrise
+    action:
+      - service: pv_miner.wake_miner
+        target:
+          entity_id: switch.s19_miner
+      - delay: "00:00:30"
+      - service: pv_miner.set_power_profile
+        data:
+          profile: "435MHz"  # Start with medium-low power
+        target:
+          entity_id: switch.s19_miner
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "🌅 Good morning! Miner ready for solar mining at 435MHz"
+
+# 5. Hashboard Individual Control
+  - id: hashboard_temperature_control
+    alias: "🔥 Individual Hashboard Temperature Control"
+    description: "Disable hot hashboards individually"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.s19_hashboard_0_temperature
+        above: 80
+        for:
+          minutes: 3
+      - platform: numeric_state
+        entity_id: sensor.s19_hashboard_1_temperature
+        above: 80
+        for:
+          minutes: 3
+      - platform: numeric_state
+        entity_id: sensor.s19_hashboard_2_temperature
+        above: 80
+        for:
+          minutes: 3
+    action:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.s19_hashboard_0_temperature
+                above: 80
+            sequence:
+              - service: switch.turn_off
+                target:
+                  entity_id: switch.s19_hashboard_0
+              - service: notify.mobile_app_your_phone
+                data:
+                  message: "🔥 Hashboard 0 disabled due to high temperature ({{ states('sensor.s19_hashboard_0_temperature') }}°C)"
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.s19_hashboard_1_temperature
+                above: 80
+            sequence:
+              - service: switch.turn_off
+                target:
+                  entity_id: switch.s19_hashboard_1
+              - service: notify.mobile_app_your_phone
+                data:
+                  message: "🔥 Hashboard 1 disabled due to high temperature ({{ states('sensor.s19_hashboard_1_temperature') }}°C)"
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.s19_hashboard_2_temperature
+                above: 80
+            sequence:
+              - service: switch.turn_off
+                target:
+                  entity_id: switch.s19_hashboard_2
+              - service: notify.mobile_app_your_phone
+                data:
+                  message: "🔥 Hashboard 2 disabled due to high temperature ({{ states('sensor.s19_hashboard_2_temperature') }}°C)"
+
+# 6. Efficiency Optimization
+  - id: efficiency_optimization
+    alias: "📊 Efficiency Optimization"
+    description: "Automatically optimize for best efficiency during good solar conditions"
+    trigger:
+      - platform: time_pattern
+        minutes: "/30"  # Check every 30 minutes
+    condition:
+      - condition: numeric_state
+        entity_id: sensor.pro3em_total_active_power
+        above: 5000  # Only when solar is good
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+    action:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.s19_efficiency
+                above: 25  # J/TH - if efficiency is poor
+            sequence:
+              - service: pv_miner.set_power_profile
+                data:
+                  profile: "560MHz"  # More efficient profile
+                target:
+                  entity_id: switch.s19_miner
+              - service: notify.mobile_app_your_phone
+                data:
+                  message: "📊 Efficiency optimization: switched to 560MHz profile"
+
+# 7. Performance Monitoring Alert
+  - id: performance_alert
+    alias: "⚠️ Performance Alert"
+    description: "Alert when hashrate drops significantly"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.s19_hashrate
+        below: 100  # TH/s - adjust based on expected performance
+        for:
+          minutes: 10
+    condition:
+      - condition: state
+        entity_id: switch.s19_miner
+        state: "on"
+    action:
+      - service: notify.mobile_app_your_phone
+        data:
+          message: "⚠️ LOW HASHRATE ALERT: Only {{ states('sensor.s19_hashrate') }} TH/s for 10 minutes"
+          title: "🔧 Miner Performance Issue"
