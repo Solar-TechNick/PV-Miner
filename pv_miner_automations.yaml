@@ -9,115 +9,115 @@ automation:
     description: "Switch to high power mining when solar production is high"
     trigger:
       - platform: numeric_state
-        entity_id: sensor.solar_power_production  # Replace with your solar sensor
+        entity_id: sensor.pro3em_total_active_power  # Replace with your solar sensor
         above: 6000  # Watts - adjust based on your setup
         for:
           minutes: 5
     condition:
       - condition: state
-        entity_id: switch.antminer_s21_miner
+        entity_id: switch.s19_miner
         state: "on"
     action:
       - service: pv_miner.set_power_profile
         data:
           profile: "810MHz"  # High power profile
         target:
-          entity_id: switch.antminer_s21_miner
+          entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone  # Optional notification
         data:
-          message: "🔥 Miner switched to HIGH POWER (810MHz) - Solar: {{ states('sensor.solar_power_production') }}W"
+          message: "🔥 Miner switched to HIGH POWER (810MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
 
   - id: solar_mining_medium_power
     alias: "⚖️ Solar Mining - Medium Power Mode"
     description: "Switch to medium power when solar is moderate"
     trigger:
       - platform: numeric_state
-        entity_id: sensor.solar_power_production
+        entity_id: sensor.pro3em_total_active_power
         above: 4000
         below: 6000
         for:
           minutes: 5
     condition:
       - condition: state
-        entity_id: switch.antminer_s21_miner
+        entity_id: switch.s19_miner
         state: "on"
     action:
       - service: pv_miner.set_power_profile
         data:
           profile: "default"  # Standard 710MHz profile
         target:
-          entity_id: switch.antminer_s21_miner
+          entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
-          message: "⚖️ Miner switched to BALANCED (default) - Solar: {{ states('sensor.solar_power_production') }}W"
+          message: "⚖️ Miner switched to BALANCED (default) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
 
   - id: solar_mining_low_power
     alias: "🌱 Solar Mining - Eco Mode"
     description: "Switch to eco mode when solar production is low"
     trigger:
       - platform: numeric_state
-        entity_id: sensor.solar_power_production
+        entity_id: sensor.pro3em_total_active_power
         above: 2000
         below: 4000
         for:
           minutes: 5
     condition:
       - condition: state
-        entity_id: switch.antminer_s21_miner
+        entity_id: switch.s19_miner
         state: "on"
     action:
       - service: pv_miner.set_power_profile
         data:
           profile: "435MHz"  # Lower power profile
         target:
-          entity_id: switch.antminer_s21_miner
+          entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
-          message: "🌱 Miner switched to ECO MODE (435MHz) - Solar: {{ states('sensor.solar_power_production') }}W"
+          message: "🌱 Miner switched to ECO MODE (435MHz) - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
 
   - id: solar_mining_sleep_mode
     alias: "😴 Solar Mining - Sleep Mode"
     description: "Put miner to sleep when solar is very low"
     trigger:
       - platform: numeric_state
-        entity_id: sensor.solar_power_production
+        entity_id: sensor.pro3em_total_active_power
         below: 2000
         for:
           minutes: 10
     action:
       - service: pv_miner.sleep_miner
         target:
-          entity_id: switch.antminer_s21_miner
+          entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
-          message: "😴 Miner put to SLEEP - Solar too low: {{ states('sensor.solar_power_production') }}W"
+          message: "😴 Miner put to SLEEP - Solar too low: {{ states('sensor.pro3em_total_active_power') }}W"
 
   - id: solar_mining_wake_up
     alias: "⏰ Solar Mining - Wake Up"
     description: "Wake up miner when solar production returns"
     trigger:
       - platform: numeric_state
-        entity_id: sensor.solar_power_production
+        entity_id: sensor.pro3em_total_active_power
         above: 2500
         for:
           minutes: 5
     condition:
       - condition: state
-        entity_id: switch.antminer_s21_miner
+        entity_id: switch.s19_miner
         state: "off"
     action:
       - service: pv_miner.wake_miner
         target:
-          entity_id: switch.antminer_s21_miner
+          entity_id: switch.s19_miner
       - delay: "00:00:30"  # Wait for miner to wake up
       - service: pv_miner.set_power_profile
         data:
           profile: "310MHz"  # Start with eco profile
         target:
-          entity_id: switch.antminer_s21_miner
+          entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
-          message: "⏰ Miner WOKEN UP and started in ECO mode - Solar: {{ states('sensor.solar_power_production') }}W"
+          message: "⏰ Miner WOKEN UP and started in ECO mode - Solar: {{ states('sensor.pro3em_total_active_power') }}W"
 
 # 2. Battery Protection Automations
   - id: battery_protection_low
@@ -134,7 +134,7 @@ automation:
         data:
           profile: "310MHz"  # Minimum power profile
         target:
-          entity_id: switch.antminer_s21_miner
+          entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
           message: "🔋 BATTERY LOW ({{ states('sensor.battery_soc') }}%) - Miner switched to minimum power"
@@ -151,7 +151,7 @@ automation:
     action:
       - service: pv_miner.sleep_miner
         target:
-          entity_id: switch.antminer_s21_miner
+          entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
           message: "🚨 CRITICAL BATTERY ({{ states('sensor.battery_soc') }}%) - Miner EMERGENCY SLEEP!"
@@ -163,7 +163,7 @@ automation:
     description: "Reduce power when miner gets too hot"
     trigger:
       - platform: numeric_state
-        entity_id: sensor.antminer_s21_temperature
+        entity_id: sensor.s19_temperature
         above: 75  # Celsius - adjust based on your comfort level
         for:
           minutes: 2
@@ -172,27 +172,27 @@ automation:
         data:
           profile: "435MHz"  # Reduce to medium-low power
         target:
-          entity_id: switch.antminer_s21_miner
+          entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
-          message: "🌡️ HIGH TEMPERATURE ({{ states('sensor.antminer_s21_temperature') }}°C) - Reduced to 435MHz profile"
+          message: "🌡️ HIGH TEMPERATURE ({{ states('sensor.s19_temperature') }}°C) - Reduced to 435MHz profile"
 
   - id: temperature_emergency
     alias: "🔥 Temperature Emergency"
     description: "Emergency stop if temperature is dangerous"
     trigger:
       - platform: numeric_state
-        entity_id: sensor.antminer_s21_temperature
+        entity_id: sensor.s19_temperature
         above: 85  # Emergency temperature
         for:
           minutes: 1
     action:
       - service: pv_miner.emergency_stop
         target:
-          entity_id: switch.antminer_s21_miner
+          entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
-          message: "🔥 EMERGENCY TEMPERATURE ({{ states('sensor.antminer_s21_temperature') }}°C) - MINER STOPPED!"
+          message: "🔥 EMERGENCY TEMPERATURE ({{ states('sensor.s19_temperature') }}°C) - MINER STOPPED!"
           title: "🚨 Miner Emergency"
 
 # 4. Time-Based Automations
@@ -205,14 +205,14 @@ automation:
         offset: "+01:00:00"  # 1 hour after sunset
     condition:
       - condition: state
-        entity_id: switch.antminer_s21_miner
+        entity_id: switch.s19_miner
         state: "on"
     action:
       - service: pv_miner.set_power_profile
         data:
           profile: "310MHz"  # Quiet, low power
         target:
-          entity_id: switch.antminer_s21_miner
+          entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
           message: "🌙 Night mode activated - Miner switched to quiet 310MHz profile"
@@ -227,13 +227,13 @@ automation:
     action:
       - service: pv_miner.wake_miner
         target:
-          entity_id: switch.antminer_s21_miner
+          entity_id: switch.s19_miner
       - delay: "00:00:30"
       - service: pv_miner.set_power_profile
         data:
           profile: "435MHz"  # Start with medium-low power
         target:
-          entity_id: switch.antminer_s21_miner
+          entity_id: switch.s19_miner
       - service: notify.mobile_app_your_phone
         data:
           message: "🌅 Good morning! Miner ready for solar mining at 435MHz"
@@ -244,17 +244,17 @@ automation:
     description: "Disable hot hashboards individually"
     trigger:
       - platform: numeric_state
-        entity_id: sensor.antminer_s21_hashboard_0_temperature
+        entity_id: sensor.s19_hashboard_0_temperature
         above: 80
         for:
           minutes: 3
       - platform: numeric_state
-        entity_id: sensor.antminer_s21_hashboard_1_temperature
+        entity_id: sensor.s19_hashboard_1_temperature
         above: 80
         for:
           minutes: 3
       - platform: numeric_state
-        entity_id: sensor.antminer_s21_hashboard_2_temperature
+        entity_id: sensor.s19_hashboard_2_temperature
         above: 80
         for:
           minutes: 3
@@ -262,37 +262,37 @@ automation:
       - choose:
           - conditions:
               - condition: numeric_state
-                entity_id: sensor.antminer_s21_hashboard_0_temperature
+                entity_id: sensor.s19_hashboard_0_temperature
                 above: 80
             sequence:
               - service: switch.turn_off
                 target:
-                  entity_id: switch.antminer_s21_hashboard_0
+                  entity_id: switch.s19_hashboard_0
               - service: notify.mobile_app_your_phone
                 data:
-                  message: "🔥 Hashboard 0 disabled due to high temperature ({{ states('sensor.antminer_s21_hashboard_0_temperature') }}°C)"
+                  message: "🔥 Hashboard 0 disabled due to high temperature ({{ states('sensor.s19_hashboard_0_temperature') }}°C)"
           - conditions:
               - condition: numeric_state
-                entity_id: sensor.antminer_s21_hashboard_1_temperature
+                entity_id: sensor.s19_hashboard_1_temperature
                 above: 80
             sequence:
               - service: switch.turn_off
                 target:
-                  entity_id: switch.antminer_s21_hashboard_1
+                  entity_id: switch.s19_hashboard_1
               - service: notify.mobile_app_your_phone
                 data:
-                  message: "🔥 Hashboard 1 disabled due to high temperature ({{ states('sensor.antminer_s21_hashboard_1_temperature') }}°C)"
+                  message: "🔥 Hashboard 1 disabled due to high temperature ({{ states('sensor.s19_hashboard_1_temperature') }}°C)"
           - conditions:
               - condition: numeric_state
-                entity_id: sensor.antminer_s21_hashboard_2_temperature
+                entity_id: sensor.s19_hashboard_2_temperature
                 above: 80
             sequence:
               - service: switch.turn_off
                 target:
-                  entity_id: switch.antminer_s21_hashboard_2
+                  entity_id: switch.s19_hashboard_2
               - service: notify.mobile_app_your_phone
                 data:
-                  message: "🔥 Hashboard 2 disabled due to high temperature ({{ states('sensor.antminer_s21_hashboard_2_temperature') }}°C)"
+                  message: "🔥 Hashboard 2 disabled due to high temperature ({{ states('sensor.s19_hashboard_2_temperature') }}°C)"
 
 # 6. Efficiency Optimization
   - id: efficiency_optimization
@@ -303,23 +303,23 @@ automation:
         minutes: "/30"  # Check every 30 minutes
     condition:
       - condition: numeric_state
-        entity_id: sensor.solar_power_production
+        entity_id: sensor.pro3em_total_active_power
         above: 5000  # Only when solar is good
       - condition: state
-        entity_id: switch.antminer_s21_miner
+        entity_id: switch.s19_miner
         state: "on"
     action:
       - choose:
           - conditions:
               - condition: numeric_state
-                entity_id: sensor.antminer_s21_efficiency
+                entity_id: sensor.s19_efficiency
                 above: 25  # J/TH - if efficiency is poor
             sequence:
               - service: pv_miner.set_power_profile
                 data:
                   profile: "560MHz"  # More efficient profile
                 target:
-                  entity_id: switch.antminer_s21_miner
+                  entity_id: switch.s19_miner
               - service: notify.mobile_app_your_phone
                 data:
                   message: "📊 Efficiency optimization: switched to 560MHz profile"
@@ -330,16 +330,16 @@ automation:
     description: "Alert when hashrate drops significantly"
     trigger:
       - platform: numeric_state
-        entity_id: sensor.antminer_s21_hashrate
+        entity_id: sensor.s19_hashrate
         below: 100  # TH/s - adjust based on expected performance
         for:
           minutes: 10
     condition:
       - condition: state
-        entity_id: switch.antminer_s21_miner
+        entity_id: switch.s19_miner
         state: "on"
     action:
       - service: notify.mobile_app_your_phone
         data:
-          message: "⚠️ LOW HASHRATE ALERT: Only {{ states('sensor.antminer_s21_hashrate') }} TH/s for 10 minutes"
+          message: "⚠️ LOW HASHRATE ALERT: Only {{ states('sensor.s19_hashrate') }} TH/s for 10 minutes"
           title: "🔧 Miner Performance Issue"
