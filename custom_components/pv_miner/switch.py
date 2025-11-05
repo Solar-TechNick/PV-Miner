@@ -215,23 +215,39 @@ class PVMinerHashboardSwitch(CoordinatorEntity, SwitchEntity):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the hashboard on."""
         try:
+            # First ensure miner is awake (not in sleep/idle mode)
+            try:
+                await self._api.resume_mining()
+                _LOGGER.debug("Woke up miner before enabling hashboard %d", self._board_num)
+            except Exception as wake_err:
+                _LOGGER.debug("Miner already awake or wake failed: %s", wake_err)
+
+            # Now enable the hashboard
             await self._api.enable_hashboard(self._board_num)
             _LOGGER.info("Hashboard %d on miner %s turned on", self._board_num, self._miner_name)
         except LuxOSAPIError as e:
             _LOGGER.error("Error turning on hashboard %d: %s", self._board_num, e)
             raise
-        
+
         # Request coordinator refresh
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the hashboard off."""
         try:
+            # First ensure miner is awake (not in sleep/idle mode)
+            try:
+                await self._api.resume_mining()
+                _LOGGER.debug("Woke up miner before disabling hashboard %d", self._board_num)
+            except Exception as wake_err:
+                _LOGGER.debug("Miner already awake or wake failed: %s", wake_err)
+
+            # Now disable the hashboard
             await self._api.disable_hashboard(self._board_num)
             _LOGGER.info("Hashboard %d on miner %s turned off", self._board_num, self._miner_name)
         except LuxOSAPIError as e:
             _LOGGER.error("Error turning off hashboard %d: %s", self._board_num, e)
             raise
-        
+
         # Request coordinator refresh
         await self.coordinator.async_request_refresh()
