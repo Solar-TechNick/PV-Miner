@@ -1,6 +1,6 @@
 # PV Miner Mobile Dashboard
 # Compact mobile-optimized dashboard for solar mining on-the-go
-# Replace "antminer_s21" with your actual miner entity names
+# Replace "s19" with your actual miner entity names
 
 title: PV Miner Mobile
 views:
@@ -9,15 +9,15 @@ views:
     icon: mdi:cellphone
     theme: Backend-selected
     badges:
-      - entity: switch.antminer_s21_miner
-      - entity: sensor.antminer_s21_hashrate
-      - entity: sensor.antminer_s21_power_consumption
+      - entity: switch.s19_miner
+      - entity: sensor.s19_hashrate
+      - entity: sensor.s19_power_consumption
     cards:
       # Quick Status Row
       - type: horizontal-stack
         cards:
           - type: button
-            entity: switch.antminer_s21_miner
+            entity: switch.s19_miner
             name: "Miner"
             show_state: true
             tap_action:
@@ -26,7 +26,7 @@ views:
               action: more-info
 
           - type: entity
-            entity: sensor.antminer_s21_hashrate
+            entity: sensor.s19_hashrate
             name: "TH/s"
             icon: mdi:speedometer
 
@@ -34,12 +34,12 @@ views:
       - type: horizontal-stack
         cards:
           - type: entity
-            entity: sensor.antminer_s21_power_consumption
+            entity: sensor.s19_power_consumption
             name: "Power"
             icon: mdi:flash
 
           - type: entity
-            entity: sensor.antminer_s21_temperature
+            entity: sensor.s19_temperature
             name: "Temp"
             icon: mdi:thermometer
 
@@ -64,7 +64,7 @@ views:
               action: call-service
               service: pv_miner.wake_miner
               target:
-                entity_id: switch.antminer_s21_miner
+                entity_id: switch.s19_miner
             name: "⏰"
             show_state: false
             icon: mdi:power-on
@@ -74,7 +74,7 @@ views:
               action: call-service
               service: pv_miner.sleep_miner
               target:
-                entity_id: switch.antminer_s21_miner
+                entity_id: switch.s19_miner
             name: "😴"
             show_state: false
             icon: mdi:power-sleep
@@ -84,7 +84,7 @@ views:
               action: call-service
               service: pv_miner.eco_mode
               target:
-                entity_id: switch.antminer_s21_miner
+                entity_id: switch.s19_miner
             name: "🌱"
             show_state: false
             icon: mdi:leaf
@@ -94,7 +94,7 @@ views:
               action: call-service
               service: pv_miner.solar_max
               target:
-                entity_id: switch.antminer_s21_miner
+                entity_id: switch.s19_miner
             name: "☀️"
             show_state: false
             icon: mdi:weather-sunny
@@ -109,7 +109,7 @@ views:
               service_data:
                 profile: "310MHz"
               target:
-                entity_id: switch.antminer_s21_miner
+                entity_id: switch.s19_miner
             name: "Eco"
             show_state: false
             icon: mdi:battery-charging-low
@@ -121,7 +121,7 @@ views:
               service_data:
                 profile: "560MHz"
               target:
-                entity_id: switch.antminer_s21_miner
+                entity_id: switch.s19_miner
             name: "Mid"
             show_state: false
             icon: mdi:scale-balance
@@ -133,7 +133,7 @@ views:
               service_data:
                 profile: "default"
               target:
-                entity_id: switch.antminer_s21_miner
+                entity_id: switch.s19_miner
             name: "Std"
             show_state: false
             icon: mdi:fire
@@ -145,7 +145,7 @@ views:
               service_data:
                 profile: "810MHz"
               target:
-                entity_id: switch.antminer_s21_miner
+                entity_id: switch.s19_miner
             name: "Max"
             show_state: false
             icon: mdi:lightning-bolt
@@ -154,18 +154,18 @@ views:
       - type: horizontal-stack
         cards:
           - type: entity
-            entity: select.antminer_s21_power_profile
+            entity: select.s19_power_profile
             name: "Profile"
 
           - type: entity
-            entity: select.antminer_s21_solar_mode
+            entity: select.s19_solar_mode
             name: "Mode"
 
       # Performance Gauges
       - type: horizontal-stack
         cards:
           - type: gauge
-            entity: sensor.antminer_s21_hashrate
+            entity: sensor.s19_hashrate
             name: "Hashrate"
             unit: "TH/s"
             min: 0
@@ -176,7 +176,7 @@ views:
               red: 0
 
           - type: gauge
-            entity: sensor.antminer_s21_power_consumption
+            entity: sensor.s19_power_consumption
             name: "Power"
             unit: "W"
             min: 0
@@ -190,7 +190,7 @@ views:
       - type: horizontal-stack
         cards:
           - type: button
-            entity: switch.antminer_s21_hashboard_0
+            entity: switch.s19_hashboard_0
             name: "B0"
             show_state: true
             tap_action:
@@ -198,7 +198,7 @@ views:
             icon: mdi:chip
 
           - type: button  
-            entity: switch.antminer_s21_hashboard_1
+            entity: switch.s19_hashboard_1
             name: "B1"
             show_state: true
             tap_action:
@@ -206,7 +206,7 @@ views:
             icon: mdi:chip
 
           - type: button
-            entity: switch.antminer_s21_hashboard_2
+            entity: switch.s19_hashboard_2
             name: "B2"
             show_state: true
             tap_action:
@@ -219,13 +219,13 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
-          - entity: number.antminer_s21_power_limit
+          - entity: number.s19_power_limit
             name: "Power Limit"
             icon: mdi:flash
-          - entity: number.antminer_s21_frequency_offset
+          - entity: number.s19_frequency_offset
             name: "Freq Offset"
             icon: mdi:tune
-          - entity: number.antminer_s21_available_solar_power
+          - entity: number.s19_available_solar_power
             name: "Solar Available"
             icon: mdi:solar-panel
 
@@ -235,16 +235,16 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
-          - entity: sensor.antminer_s21_efficiency
+          - entity: sensor.s19_efficiency
             name: "Efficiency"
             icon: mdi:gauge
-          - entity: sensor.antminer_s21_uptime
+          - entity: sensor.s19_uptime
             name: "Uptime"
             icon: mdi:clock
-          - entity: sensor.antminer_s21_fan_speed
+          - entity: sensor.s19_fan_speed
             name: "Fan Speed"
             icon: mdi:fan
-          - entity: sensor.antminer_s21_mining_pool
+          - entity: sensor.s19_mining_pool
             name: "Pool"
             icon: mdi:pool
 
@@ -254,7 +254,7 @@ views:
           action: call-service
           service: pv_miner.emergency_stop
           target:
-            entity_id: switch.antminer_s21_miner
+            entity_id: switch.s19_miner
         name: "🚨 Emergency Stop"
         icon: mdi:stop-circle
         show_state: false
@@ -266,10 +266,10 @@ views:
       # Quick Status Summary  
       - type: markdown
         content: |
-          **Status:** {{ states('switch.antminer_s21_miner') | title }} | 
-          **{{ states('sensor.antminer_s21_hashrate') }} TH/s** | 
-          **{{ states('sensor.antminer_s21_power_consumption') }} W** |
-          **{{ states('sensor.antminer_s21_temperature') }}°C**
+          **Status:** {{ states('switch.s19_miner') | title }} | 
+          **{{ states('sensor.s19_hashrate') }} TH/s** | 
+          **{{ states('sensor.s19_power_consumption') }} W** |
+          **{{ states('sensor.s19_temperature') }}°C**
 
-          Profile: **{{ states('select.antminer_s21_power_profile') }}** | 
-          Efficiency: **{{ states('sensor.antminer_s21_efficiency') }} J/TH**
+          Profile: **{{ states('select.s19_power_profile') }}** | 
+          Efficiency: **{{ states('sensor.s19_efficiency') }} J/TH**
