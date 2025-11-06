@@ -176,6 +176,21 @@ gh release create v1.0.15 --title "v1.0.15" --notes "Release notes" --latest
 - Check logs for `profileget` command results
 - Ensure miner has LuxOS profiles configured (use LuxOS web interface to verify)
 
+## Diagnostic Tools
+
+**test_hashboard_simple.py**: Standalone diagnostic tool for testing LuxOS hashboard control directly (bypasses Home Assistant). Useful for diagnosing firmware issues. Usage:
+```bash
+python3 test_hashboard_simple.py
+```
+Features:
+- Tests basic miner connection
+- Gets session ID and ATM status
+- Shows current hashboard states
+- Interactive board enable/disable testing
+- Verifies if commands actually change board state
+
+**fetch_ha_logs.py**: Fetches Home Assistant logs via REST API when SSH is not available. Requires a long-lived access token from HA.
+
 ## Recent Version History
 
 - **v1.0.25**: Added hashboard control verification and LuxOS firmware limitation detection
@@ -197,7 +212,26 @@ gh release create v1.0.15 --title "v1.0.15" --notes "Release notes" --latest
 
 **Hashboard control when miner is asleep**: As of v1.0.20, hashboard switches automatically call resume_mining() before enable/disable operations to prevent "curtail mode is idle or sleep" errors.
 
-**Hashboard control not working (v1.0.25)**: Some LuxOS firmware versions (e.g., 2025.10.15.191043) have non-functional `enableboard`/`disableboard` commands - they return success but don't actually change board state. The integration now verifies board state changes and logs a warning if the firmware doesn't support this feature. **Recommended workaround**: Use power profile switching instead of per-board control for solar following. Profiles like "260MHz" vs lower frequencies can achieve similar power management without requiring per-board control.
+**Hashboard control not working (v1.0.25)**:
+
+**CONFIRMED BUG**: LuxOS firmware 2025.10.15.191043 has non-functional `enableboard`/`disableboard` commands. Extensive testing confirms:
+- Commands return success ("Board enabled"/"Board disabled") with STATUS='S'
+- Board state never changes (remains Enabled=Y regardless of command)
+- Issue persists even with ATM disabled
+- Issue persists even with Home Assistant completely off
+- Tested over 30+ seconds with no state change
+- Affects all hashboards regardless of their working status
+
+**Testing performed**: Direct TCP API calls to miner at 192.168.1.210, bypassing all integration layers. Commands accepted but have zero effect on hardware.
+
+**Root cause**: This is a LuxOS firmware bug/limitation, NOT an integration issue. The hardware reports the command succeeded but doesn't execute it.
+
+**Recommended alternatives for solar following**:
+1. **Power profile switching** (Best option): Switch between frequency profiles (e.g., "260MHz" high power, "220MHz" medium, "180MHz" low) - this DOES work and provides granular power control
+2. **Full miner on/off**: Use curtail sleep/wake to turn entire miner on/off - this works but is all-or-nothing
+3. **Contact LuxOS support**: Report this bug and request a firmware fix
+
+The integration now verifies board state changes after commands and logs warnings when firmware doesn't support the feature (v1.0.25).
 
 ## Future Development Areas
 
