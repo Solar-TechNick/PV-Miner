@@ -11,19 +11,19 @@ automation:
     trigger:
       # Trigger on solar power changes
       - platform: state
-        entity_id: sensor.solar_power_available  # REPLACE with your actual solar power sensor
+        entity_id: sensor.pro3em_total_active_power
 
     condition:
       # Only run during daylight or when solar power sensor is available
       - condition: template
-        value_template: "{{ states('sensor.solar_power_available') not in ['unknown', 'unavailable'] }}"
+        value_template: "{{ states('sensor.pro3em_total_active_power') not in ['unknown', 'unavailable'] }}"
 
     action:
       - choose:
           # Step 1: 500-2200W - Standby/Sleep Mode
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 500 and states('sensor.solar_power_available') | float(0) < 2200 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 500 and states('sensor.pro3em_total_active_power') | float(0) < 2200 }}"
             sequence:
               - service: switch.turn_off
                 target:
@@ -31,12 +31,12 @@ automation:
               - service: notify.persistent_notification
                 data:
                   title: "PV Miner Power Control"
-                  message: "Solar {{ states('sensor.solar_power_available') }}W - Sleep mode (50W)"
+                  message: "Solar {{ states('sensor.pro3em_total_active_power') }}W - Sleep mode (50W)"
 
           # Step 2: 2200-2282W - 260MHz (2223W, 48 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2200 and states('sensor.solar_power_available') | float(0) < 2282 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 2200 and states('sensor.pro3em_total_active_power') | float(0) < 2282 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -51,7 +51,7 @@ automation:
           # Step 3: 2282-2365W - 285MHz (2311W, 53 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2282 and states('sensor.solar_power_available') | float(0) < 2365 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 2282 and states('sensor.pro3em_total_active_power') | float(0) < 2365 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -66,7 +66,7 @@ automation:
           # Step 4: 2365-2448W - 310MHz (2399W, 57 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2365 and states('sensor.solar_power_available') | float(0) < 2448 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 2365 and states('sensor.pro3em_total_active_power') | float(0) < 2448 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -81,7 +81,7 @@ automation:
           # Step 5: 2448-2531W - 335MHz (2488W, 62 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2448 and states('sensor.solar_power_available') | float(0) < 2531 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 2448 and states('sensor.pro3em_total_active_power') | float(0) < 2531 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -96,7 +96,7 @@ automation:
           # Step 6: 2531-2614W - 360MHz (2576W, 67 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2531 and states('sensor.solar_power_available') | float(0) < 2614 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 2531 and states('sensor.pro3em_total_active_power') | float(0) < 2614 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -111,7 +111,7 @@ automation:
           # Step 7: 2614-2697W - 385MHz (2664W, 71 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2614 and states('sensor.solar_power_available') | float(0) < 2697 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 2614 and states('sensor.pro3em_total_active_power') | float(0) < 2697 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -126,7 +126,7 @@ automation:
           # Step 8: 2697-2780W - 410MHz (2752W, 76 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2697 and states('sensor.solar_power_available') | float(0) < 2780 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 2697 and states('sensor.pro3em_total_active_power') | float(0) < 2780 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -141,7 +141,7 @@ automation:
           # Step 9: 2780-2863W - 435MHz (2838W, 80 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2780 and states('sensor.solar_power_available') | float(0) < 2863 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 2780 and states('sensor.pro3em_total_active_power') | float(0) < 2863 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -156,7 +156,7 @@ automation:
           # Step 10: 2863-2946W - 460MHz (2923W, 85 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2863 and states('sensor.solar_power_available') | float(0) < 2946 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 2863 and states('sensor.pro3em_total_active_power') | float(0) < 2946 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -171,7 +171,7 @@ automation:
           # Step 11: 2946-3029W - 485MHz (3009W, 90 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2946 and states('sensor.solar_power_available') | float(0) < 3029 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 2946 and states('sensor.pro3em_total_active_power') | float(0) < 3029 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -186,7 +186,7 @@ automation:
           # Step 12: 3029-3112W - 510MHz (3094W, 94 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3029 and states('sensor.solar_power_available') | float(0) < 3112 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 3029 and states('sensor.pro3em_total_active_power') | float(0) < 3112 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -201,7 +201,7 @@ automation:
           # Step 13: 3112-3195W - 535MHz (3180W, 99 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3112 and states('sensor.solar_power_available') | float(0) < 3195 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 3112 and states('sensor.pro3em_total_active_power') | float(0) < 3195 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -216,7 +216,7 @@ automation:
           # Step 14: 3195-3278W - 560MHz (3265W, 104 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3195 and states('sensor.solar_power_available') | float(0) < 3278 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 3195 and states('sensor.pro3em_total_active_power') | float(0) < 3278 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -231,7 +231,7 @@ automation:
           # Step 15: 3278-3361W - 585MHz (3351W, 108 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3278 and states('sensor.solar_power_available') | float(0) < 3361 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 3278 and states('sensor.pro3em_total_active_power') | float(0) < 3361 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -246,7 +246,7 @@ automation:
           # Step 16: 3361-3444W - 610MHz (3436W, 113 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3361 and states('sensor.solar_power_available') | float(0) < 3444 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 3361 and states('sensor.pro3em_total_active_power') | float(0) < 3444 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -261,7 +261,7 @@ automation:
           # Step 17: 3444-3527W - 635MHz (3522W, 118 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3444 and states('sensor.solar_power_available') | float(0) < 3527 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 3444 and states('sensor.pro3em_total_active_power') | float(0) < 3527 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -276,7 +276,7 @@ automation:
           # Step 18: 3527-3610W - default (3608W, 122 TH/s)
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3527 and states('sensor.solar_power_available') | float(0) < 3610 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 3527 and states('sensor.pro3em_total_active_power') | float(0) < 3610 }}"
             sequence:
               - service: switch.turn_on
                 target:
@@ -291,7 +291,7 @@ automation:
           # Step 19: 3610W+ - 685MHz (3693W, 127 TH/s) - Maximum
           - conditions:
               - condition: template
-                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3610 }}"
+                value_template: "{{ states('sensor.pro3em_total_active_power') | float(0) >= 3610 }}"
             sequence:
               - service: switch.turn_on
                 target:

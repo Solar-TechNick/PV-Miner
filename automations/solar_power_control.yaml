@@ -10,12 +10,12 @@ automation:
     trigger:
       # Trigger on solar power changes
       - platform: state
-        entity_id: sensor.solar_power_available  # REPLACE with your actual solar power sensor
+        entity_id: sensor.pro3em_total_active_power
 
     condition:
       # Only run during daylight or when solar power sensor is available
       - condition: template
-        value_template: "{{ states('sensor.solar_power_available') not in ['unknown', 'unavailable'] }}"
+        value_template: "{{ states('sensor.pro3em_total_active_power') not in ['unknown', 'unavailable'] }}"
 
     action:
       - choose:
