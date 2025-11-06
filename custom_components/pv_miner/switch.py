@@ -38,21 +38,10 @@ async def async_setup_entry(
             SWITCH_TYPES["miner_enabled"],
         )
     )
-    
-    # Create individual hashboard switches
-    for board_num in range(3):  # Antminers typically have 3 hashboards
-        entities.append(
-            PVMinerHashboardSwitch(
-                coordinator,
-                api,
-                config_entry.entry_id,
-                config[CONF_NAME],
-                f"hashboard_{board_num}",
-                f"Hashboard {board_num}",
-                board_num,
-            )
-        )
-    
+
+    # Hashboard switches removed - not supported by LuxOS firmware 2025.10.15.191043
+    # Use power profile switching instead for granular power control
+
     async_add_entities(entities)
 
 
@@ -146,122 +135,5 @@ class PVMinerSwitch(CoordinatorEntity, SwitchEntity):
         
         # Request coordinator refresh
         await self.coordinator.async_request_refresh()
-
-
-class PVMinerHashboardSwitch(CoordinatorEntity, SwitchEntity):
-    """Representation of a hashboard switch."""
-
-    def __init__(
-        self,
-        coordinator,
-        api,
-        config_entry_id: str,
-        miner_name: str,
-        switch_type: str,
-        switch_name: str,
-        board_num: int,
-    ) -> None:
-        """Initialize the hashboard switch."""
-        super().__init__(coordinator)
-        self._api = api
-        self._config_entry_id = config_entry_id
-        self._miner_name = miner_name
-        self._switch_type = switch_type
-        self._board_num = board_num
-        
-        self._attr_name = f"{miner_name} {switch_name}"
-        self._attr_unique_id = f"{config_entry_id}_{switch_type}"
-        self._attr_icon = "mdi:chip"
-
-    @property
-    def device_info(self) -> Dict[str, Any]:
-        """Return device information."""
-        return {
-            "identifiers": {(DOMAIN, self._config_entry_id)},
-            "name": self._miner_name,
-            "manufacturer": "Antminer",
-            "model": "Bitcoin Miner",
-            "sw_version": "LuxOS",
-        }
-
-    @property
-    def is_on(self) -> Optional[bool]:
-        """Return True if the hashboard is enabled."""
-        if not self.coordinator.data or not self.coordinator.data.get("connected"):
-            return None
-            
-        data = self.coordinator.data
-        
-        try:
-            return self._is_hashboard_enabled(data)
-        except (KeyError, TypeError, ValueError) as e:
-            _LOGGER.debug("Error checking hashboard %d state: %s", self._board_num, e)
-            return None
-
-    def _is_hashboard_enabled(self, data: Dict[str, Any]) -> bool:
-        """Check if hashboard is enabled based on device data."""
-        devs = data.get("devs", {})
-        if isinstance(devs, dict) and "DEVS" in devs:
-            dev_data = devs["DEVS"]
-            if isinstance(dev_data, list) and len(dev_data) > self._board_num:
-                board_data = dev_data[self._board_num]
-                if isinstance(board_data, dict):
-                    # Check if device is enabled
-                    status = board_data.get("Status", "")
-                    enabled = board_data.get("Enabled", "N")
-                    return status == "Alive" and enabled == "Y"
-        return False
-
-    async def async_turn_on(self, **kwargs: Any) -> None:
-        """Turn the hashboard on."""
-        _LOGGER.info(f"Attempting to turn ON hashboard {self._board_num} on {self._miner_name}")
-        try:
-            # First ensure miner is awake (not in sleep/idle mode)
-            try:
-                await self._api.resume_mining()
-                _LOGGER.debug("Woke up miner before enabling hashboard %d", self._board_num)
-            except LuxOSAPIError as wake_err:
-                # "Miner is already active" is expected and OK, other errors should be logged
-                if "already active" not in str(wake_err).lower():
-                    _LOGGER.debug("Wake miner returned: %s", wake_err)
-
-            # Now enable the hashboard
-            _LOGGER.debug(f"Calling enable_hashboard({self._board_num})")
-            await self._api.enable_hashboard(self._board_num)
-            _LOGGER.info("Hashboard %d on miner %s turned ON successfully", self._board_num, self._miner_name)
-        except LuxOSAPIError as e:
-            _LOGGER.error("Error turning on hashboard %d: %s", self._board_num, e)
-            raise
-        except Exception as e:
-            _LOGGER.error("Unexpected error turning on hashboard %d: %s", self._board_num, e, exc_info=True)
-            raise
-
-        # Request coordinator refresh
-        await self.coordinator.async_request_refresh()
-
-    async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn the hashboard off."""
-        _LOGGER.info(f"Attempting to turn OFF hashboard {self._board_num} on {self._miner_name}")
-        try:
-            # First ensure miner is awake (not in sleep/idle mode)
-            try:
-                await self._api.resume_mining()
-                _LOGGER.debug("Woke up miner before disabling hashboard %d", self._board_num)
-            except LuxOSAPIError as wake_err:
-                # "Miner is already active" is expected and OK, other errors should be logged
-                if "already active" not in str(wake_err).lower():
-                    _LOGGER.debug("Wake miner returned: %s", wake_err)
-
-            # Now disable the hashboard
-            _LOGGER.debug(f"Calling disable_hashboard({self._board_num})")
-            await self._api.disable_hashboard(self._board_num)
-            _LOGGER.info("Hashboard %d on miner %s turned OFF successfully", self._board_num, self._miner_name)
-        except LuxOSAPIError as e:
-            _LOGGER.error("Error turning off hashboard %d: %s", self._board_num, e)
-            raise
-        except Exception as e:
-            _LOGGER.error("Unexpected error turning off hashboard %d: %s", self._board_num, e, exc_info=True)
-            raise
-
-        # Request coordinator refresh
-        await self.coordinator.async_request_refresh()
+# Hashboard switch class removed - enableboard/disableboard commands don't work
+# in LuxOS firmware 2025.10.15.191043. Use power profile switching for control.

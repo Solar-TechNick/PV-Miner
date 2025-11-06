@@ -1,0 +1,198 @@
+# Solar Power-Based Miner Control Automation
+# Adjusts miner power consumption based on available solar power
+# 9 power steps from 500W (standby) to 3500W (high performance)
+
+automation:
+  - id: pv_miner_power_control
+    alias: "PV Miner: Solar Power Control"
+    description: "Automatically adjust miner power based on available solar power (9 steps: 500W-3500W)"
+
+    trigger:
+      # Trigger on solar power changes
+      - platform: state
+        entity_id: sensor.solar_power_available  # REPLACE with your actual solar power sensor
+
+    condition:
+      # Only run during daylight or when solar power sensor is available
+      - condition: template
+        value_template: "{{ states('sensor.solar_power_available') not in ['unknown', 'unavailable'] }}"
+
+    action:
+      - choose:
+          # Step 1: 500W - Standby/Sleep Mode
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 500 and states('sensor.solar_power_available') | float(0) < 2100 }}"
+            sequence:
+              - service: switch.turn_off
+                target:
+                  entity_id: switch.pv_miner_miner_enabled  # REPLACE with your actual miner switch entity
+              - service: notify.persistent_notification
+                data:
+                  title: "PV Miner Power Control"
+                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Miner in standby (500W)"
+
+          # Step 2: ~2200W - 260MHz Profile
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2100 and states('sensor.solar_power_available') | float(0) < 2300 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"  # Wait for miner to wake
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile  # REPLACE with your actual profile selector
+                data:
+                  option: "260MHz"
+              - service: notify.persistent_notification
+                data:
+                  title: "PV Miner Power Control"
+                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 260MHz (~2200W, 48 TH/s)"
+
+          # Step 3: ~2400W - 310MHz Profile
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2300 and states('sensor.solar_power_available') | float(0) < 2500 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "310MHz"
+              - service: notify.persistent_notification
+                data:
+                  title: "PV Miner Power Control"
+                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 310MHz (~2400W, 57 TH/s)"
+
+          # Step 4: ~2600W - 360MHz Profile
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2500 and states('sensor.solar_power_available') | float(0) < 2700 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "360MHz"
+              - service: notify.persistent_notification
+                data:
+                  title: "PV Miner Power Control"
+                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 360MHz (~2600W, 67 TH/s)"
+
+          # Step 5: ~2800W - 410MHz Profile
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2700 and states('sensor.solar_power_available') | float(0) < 2900 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "410MHz"
+              - service: notify.persistent_notification
+                data:
+                  title: "PV Miner Power Control"
+                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 410MHz (~2800W, 76 TH/s)"
+
+          # Step 6: ~3000W - 460MHz Profile
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2900 and states('sensor.solar_power_available') | float(0) < 3100 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "460MHz"
+              - service: notify.persistent_notification
+                data:
+                  title: "PV Miner Power Control"
+                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 460MHz (~3000W, 85 TH/s)"
+
+          # Step 7: ~3200W - 510MHz Profile
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3100 and states('sensor.solar_power_available') | float(0) < 3300 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "510MHz"
+              - service: notify.persistent_notification
+                data:
+                  title: "PV Miner Power Control"
+                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 510MHz (~3200W, 94 TH/s)"
+
+          # Step 8: ~3400W - 560MHz Profile
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3300 and states('sensor.solar_power_available') | float(0) < 3500 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "560MHz"
+              - service: notify.persistent_notification
+                data:
+                  title: "PV Miner Power Control"
+                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 560MHz (~3400W, 104 TH/s)"
+
+          # Step 9: ~3500W - 585MHz Profile
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3500 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "585MHz"
+              - service: notify.persistent_notification
+                data:
+                  title: "PV Miner Power Control"
+                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 585MHz (~3500W, 108 TH/s)"
+
+        # Default: Turn off if solar power is below 500W
+        default:
+          - service: switch.turn_off
+            target:
+              entity_id: switch.pv_miner_miner_enabled
+          - service: notify.persistent_notification
+            data:
+              title: "PV Miner Power Control"
+              message: "Solar power below 500W - Miner turned off"
+
+    mode: single  # Prevent multiple instances running simultaneously
+    max_exceeded: silent
