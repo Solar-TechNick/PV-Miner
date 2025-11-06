@@ -1,0 +1,313 @@
+# Solar Power-Based Miner Control Automation (Full Profile Range)
+# Adjusts miner power consumption based on available solar power
+# 19 power steps from 500W (standby) to 3693W (maximum performance)
+# Uses all profiles from -16 (260MHz) to +1 (685MHz)
+
+automation:
+  - id: pv_miner_power_control_full
+    alias: "PV Miner: Solar Power Control (Full Range)"
+    description: "Automatically adjust miner power based on available solar power (19 steps: 500W-3693W, all profiles)"
+
+    trigger:
+      # Trigger on solar power changes
+      - platform: state
+        entity_id: sensor.solar_power_available  # REPLACE with your actual solar power sensor
+
+    condition:
+      # Only run during daylight or when solar power sensor is available
+      - condition: template
+        value_template: "{{ states('sensor.solar_power_available') not in ['unknown', 'unavailable'] }}"
+
+    action:
+      - choose:
+          # Step 1: 500-2200W - Standby/Sleep Mode
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 500 and states('sensor.solar_power_available') | float(0) < 2200 }}"
+            sequence:
+              - service: switch.turn_off
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - service: notify.persistent_notification
+                data:
+                  title: "PV Miner Power Control"
+                  message: "Solar {{ states('sensor.solar_power_available') }}W - Sleep mode (50W)"
+
+          # Step 2: 2200-2282W - 260MHz (2223W, 48 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2200 and states('sensor.solar_power_available') | float(0) < 2282 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "260MHz"
+
+          # Step 3: 2282-2365W - 285MHz (2311W, 53 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2282 and states('sensor.solar_power_available') | float(0) < 2365 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "285MHz"
+
+          # Step 4: 2365-2448W - 310MHz (2399W, 57 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2365 and states('sensor.solar_power_available') | float(0) < 2448 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "310MHz"
+
+          # Step 5: 2448-2531W - 335MHz (2488W, 62 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2448 and states('sensor.solar_power_available') | float(0) < 2531 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "335MHz"
+
+          # Step 6: 2531-2614W - 360MHz (2576W, 67 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2531 and states('sensor.solar_power_available') | float(0) < 2614 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "360MHz"
+
+          # Step 7: 2614-2697W - 385MHz (2664W, 71 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2614 and states('sensor.solar_power_available') | float(0) < 2697 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "385MHz"
+
+          # Step 8: 2697-2780W - 410MHz (2752W, 76 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2697 and states('sensor.solar_power_available') | float(0) < 2780 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "410MHz"
+
+          # Step 9: 2780-2863W - 435MHz (2838W, 80 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2780 and states('sensor.solar_power_available') | float(0) < 2863 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "435MHz"
+
+          # Step 10: 2863-2946W - 460MHz (2923W, 85 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2863 and states('sensor.solar_power_available') | float(0) < 2946 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "460MHz"
+
+          # Step 11: 2946-3029W - 485MHz (3009W, 90 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2946 and states('sensor.solar_power_available') | float(0) < 3029 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "485MHz"
+
+          # Step 12: 3029-3112W - 510MHz (3094W, 94 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3029 and states('sensor.solar_power_available') | float(0) < 3112 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "510MHz"
+
+          # Step 13: 3112-3195W - 535MHz (3180W, 99 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3112 and states('sensor.solar_power_available') | float(0) < 3195 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "535MHz"
+
+          # Step 14: 3195-3278W - 560MHz (3265W, 104 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3195 and states('sensor.solar_power_available') | float(0) < 3278 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "560MHz"
+
+          # Step 15: 3278-3361W - 585MHz (3351W, 108 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3278 and states('sensor.solar_power_available') | float(0) < 3361 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "585MHz"
+
+          # Step 16: 3361-3444W - 610MHz (3436W, 113 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3361 and states('sensor.solar_power_available') | float(0) < 3444 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "610MHz"
+
+          # Step 17: 3444-3527W - 635MHz (3522W, 118 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3444 and states('sensor.solar_power_available') | float(0) < 3527 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "635MHz"
+
+          # Step 18: 3527-3610W - default (3608W, 122 TH/s)
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3527 and states('sensor.solar_power_available') | float(0) < 3610 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "default"
+
+          # Step 19: 3610W+ - 685MHz (3693W, 127 TH/s) - Maximum
+          - conditions:
+              - condition: template
+                value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3610 }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.pv_miner_miner_enabled
+              - delay: "00:00:05"
+              - service: select.select_option
+                target:
+                  entity_id: select.pv_miner_power_profile
+                data:
+                  option: "685MHz"
+
+        # Default: Turn off if solar power is below 500W
+        default:
+          - service: switch.turn_off
+            target:
+              entity_id: switch.pv_miner_miner_enabled
+
+    mode: single  # Prevent multiple instances running simultaneously
+    max_exceeded: silent
