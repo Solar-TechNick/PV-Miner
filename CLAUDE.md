@@ -134,7 +134,7 @@ gh release create v1.0.15 --title "v1.0.15" --notes "Release notes" --latest
 
 ## Important Implementation Details
 
-**Current Version**: 1.0.25 (see manifest.json)
+**Current Version**: 1.0.27 (see manifest.json)
 
 **Language Convention**: German for user-facing strings (translations/de.json, translations/en.json), English for code and technical documentation.
 
@@ -193,6 +193,8 @@ Features:
 
 ## Recent Version History
 
+- **v1.0.27**: Added Pro3EM sensor integration and full 19-step solar automation (all profiles from -16 to +1)
+- **v1.0.26**: Removed non-functional hashboard switches, added solar power control automations
 - **v1.0.25**: Added hashboard control verification and LuxOS firmware limitation detection
 - **v1.0.24**: Added detailed diagnostic logging for hashboard control operations
 - **v1.0.23**: Added connection logging (shows miner IP on startup)
@@ -212,7 +214,7 @@ Features:
 
 **Hashboard control when miner is asleep**: As of v1.0.20, hashboard switches automatically call resume_mining() before enable/disable operations to prevent "curtail mode is idle or sleep" errors.
 
-**Hashboard control not working (v1.0.25)**:
+**Hashboard control not working (v1.0.25-v1.0.26)**:
 
 **CONFIRMED BUG**: LuxOS firmware 2025.10.15.191043 has non-functional `enableboard`/`disableboard` commands. Extensive testing confirms:
 - Commands return success ("Board enabled"/"Board disabled") with STATUS='S'
@@ -226,12 +228,11 @@ Features:
 
 **Root cause**: This is a LuxOS firmware bug/limitation, NOT an integration issue. The hardware reports the command succeeded but doesn't execute it.
 
-**Recommended alternatives for solar following**:
-1. **Power profile switching** (Best option): Switch between frequency profiles (e.g., "260MHz" high power, "220MHz" medium, "180MHz" low) - this DOES work and provides granular power control
-2. **Full miner on/off**: Use curtail sleep/wake to turn entire miner on/off - this works but is all-or-nothing
-3. **Contact LuxOS support**: Report this bug and request a firmware fix
+**Solution (v1.0.26+)**: Hashboard switches removed from integration. Use power profile switching instead via the included automations:
+1. **19-step automation** (Recommended): `automations/solar_power_control_full.yaml` - Uses all profiles from -16 (260MHz, 2223W) to +1 (685MHz, 3693W) with ~80W intervals
+2. **9-step automation** (Simpler): `automations/solar_power_control.yaml` - Uses key profiles with 200-300W intervals
 
-The integration now verifies board state changes after commands and logs warnings when firmware doesn't support the feature (v1.0.25).
+Both automations integrate with Pro3EM energy meter (`sensor.pro3em_total_active_power`) for solar-following power control. See `automations/README.md` for setup instructions.
 
 ## Future Development Areas
 
