@@ -89,7 +89,7 @@ automation:
                   title: "PV Miner Power Control"
                   message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 360MHz (~2600W, 67 TH/s)"
 
-          # Step 5: ~2800W - 410MHz Profile
+          # Step 5: ~2800W - 435MHz Profile
           - conditions:
               - condition: template
                 value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2700 and states('sensor.solar_power_available') | float(0) < 2900 }}"
@@ -102,13 +102,13 @@ automation:
                 target:
                   entity_id: select.pv_miner_power_profile
                 data:
-                  option: "410MHz"
+                  option: "435MHz"
               - service: notify.persistent_notification
                 data:
                   title: "PV Miner Power Control"
-                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 410MHz (~2800W, 76 TH/s)"
+                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 435MHz (~2838W, 80 TH/s)"
 
-          # Step 6: ~3000W - 460MHz Profile
+          # Step 6: ~3000W - 485MHz Profile
           - conditions:
               - condition: template
                 value_template: "{{ states('sensor.solar_power_available') | float(0) >= 2900 and states('sensor.solar_power_available') | float(0) < 3100 }}"
@@ -121,13 +121,13 @@ automation:
                 target:
                   entity_id: select.pv_miner_power_profile
                 data:
-                  option: "460MHz"
+                  option: "485MHz"
               - service: notify.persistent_notification
                 data:
                   title: "PV Miner Power Control"
-                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 460MHz (~3000W, 85 TH/s)"
+                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 485MHz (~3009W, 90 TH/s)"
 
-          # Step 7: ~3200W - 510MHz Profile
+          # Step 7: ~3200W - 535MHz Profile
           - conditions:
               - condition: template
                 value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3100 and states('sensor.solar_power_available') | float(0) < 3300 }}"
@@ -140,13 +140,13 @@ automation:
                 target:
                   entity_id: select.pv_miner_power_profile
                 data:
-                  option: "510MHz"
+                  option: "535MHz"
               - service: notify.persistent_notification
                 data:
                   title: "PV Miner Power Control"
-                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 510MHz (~3200W, 94 TH/s)"
+                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 535MHz (~3180W, 99 TH/s)"
 
-          # Step 8: ~3400W - 560MHz Profile
+          # Step 8: ~3400W - 610MHz Profile
           - conditions:
               - condition: template
                 value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3300 and states('sensor.solar_power_available') | float(0) < 3500 }}"
@@ -159,13 +159,13 @@ automation:
                 target:
                   entity_id: select.pv_miner_power_profile
                 data:
-                  option: "560MHz"
+                  option: "610MHz"
               - service: notify.persistent_notification
                 data:
                   title: "PV Miner Power Control"
-                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 560MHz (~3400W, 104 TH/s)"
+                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 610MHz (~3436W, 113 TH/s)"
 
-          # Step 9: ~3500W - 585MHz Profile
+          # Step 9: ~3500W - 635MHz Profile
           - conditions:
               - condition: template
                 value_template: "{{ states('sensor.solar_power_available') | float(0) >= 3500 }}"
@@ -178,11 +178,11 @@ automation:
                 target:
                   entity_id: select.pv_miner_power_profile
                 data:
-                  option: "585MHz"
+                  option: "635MHz"
               - service: notify.persistent_notification
                 data:
                   title: "PV Miner Power Control"
-                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 585MHz (~3500W, 108 TH/s)"
+                  message: "Solar power {{ states('sensor.solar_power_available') }}W - Profile: 635MHz (~3522W, 118 TH/s)"
 
         # Default: Turn off if solar power is below 500W
         default:

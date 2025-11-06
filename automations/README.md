@@ -7,14 +7,14 @@ This automation automatically adjusts your miner's power consumption based on av
 | Step | Solar Power | Action | Profile | Miner Power | Hashrate |
 |------|------------|--------|---------|-------------|----------|
 | 1 | 500-2100W | Sleep mode | - | ~50W | 0 TH/s |
-| 2 | 2100-2300W | Profile switch | 260MHz | ~2200W | 48 TH/s |
-| 3 | 2300-2500W | Profile switch | 310MHz | ~2400W | 57 TH/s |
-| 4 | 2500-2700W | Profile switch | 360MHz | ~2600W | 67 TH/s |
-| 5 | 2700-2900W | Profile switch | 410MHz | ~2800W | 76 TH/s |
-| 6 | 2900-3100W | Profile switch | 460MHz | ~3000W | 85 TH/s |
-| 7 | 3100-3300W | Profile switch | 510MHz | ~3200W | 94 TH/s |
-| 8 | 3300-3500W | Profile switch | 560MHz | ~3400W | 104 TH/s |
-| 9 | 3500W+ | Profile switch | 585MHz | ~3500W | 108 TH/s |
+| 2 | 2100-2300W | Profile switch | 260MHz | 2223W | 48 TH/s |
+| 3 | 2300-2500W | Profile switch | 310MHz | 2399W | 57 TH/s |
+| 4 | 2500-2700W | Profile switch | 360MHz | 2576W | 67 TH/s |
+| 5 | 2700-2900W | Profile switch | 435MHz | 2838W | 80 TH/s |
+| 6 | 2900-3100W | Profile switch | 485MHz | 3009W | 90 TH/s |
+| 7 | 3100-3300W | Profile switch | 535MHz | 3180W | 99 TH/s |
+| 8 | 3300-3500W | Profile switch | 610MHz | 3436W | 113 TH/s |
+| 9 | 3500W+ | Profile switch | 635MHz | 3522W | 118 TH/s |
 
 ## Installation
 
