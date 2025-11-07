@@ -186,38 +186,57 @@ views:
               yellow: 5000
               red: 7000
 
-      # Progressive Hashboard Toggle
-      - type: entity
-        entity: input_boolean.pv_miner_progressive_hashboard
-        name: "Progressive Hashboards"
-        icon: mdi:chip
-
-      # Hashboard Status
+      # Additional Power Profiles (replaces hashboard controls)
+      # Note: Individual hashboard switches removed in v1.0.27 due to LuxOS firmware limitations
       - type: horizontal-stack
         cards:
           - type: button
-            entity: switch.s19_hashboard_0
-            name: "B0"
-            show_state: true
             tap_action:
-              action: toggle
-            icon: mdi:chip
+              action: call-service
+              service: pv_miner.set_power_profile
+              service_data:
+                profile: "260MHz"
+              target:
+                entity_id: switch.s19_miner
+            name: "Min"
+            show_state: false
+            icon: mdi:battery-charging-10
 
           - type: button
-            entity: switch.s19_hashboard_1
-            name: "B1"
-            show_state: true
             tap_action:
-              action: toggle
-            icon: mdi:chip
+              action: call-service
+              service: pv_miner.set_power_profile
+              service_data:
+                profile: "385MHz"
+              target:
+                entity_id: switch.s19_miner
+            name: "Low"
+            show_state: false
+            icon: mdi:battery-charging-40
 
           - type: button
-            entity: switch.s19_hashboard_2
-            name: "B2"
-            show_state: true
             tap_action:
-              action: toggle
-            icon: mdi:chip
+              action: call-service
+              service: pv_miner.set_power_profile
+              service_data:
+                profile: "510MHz"
+              target:
+                entity_id: switch.s19_miner
+            name: "Mid"
+            show_state: false
+            icon: mdi:battery-charging-60
+
+          - type: button
+            tap_action:
+              action: call-service
+              service: pv_miner.set_power_profile
+              service_data:
+                profile: "685MHz"
+              target:
+                entity_id: switch.s19_miner
+            name: "Max"
+            show_state: false
+            icon: mdi:battery-charging-100
 
       # Advanced Controls (Expandable)
       - type: entities

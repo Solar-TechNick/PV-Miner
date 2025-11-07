@@ -228,40 +228,67 @@ views:
                 name: "🔥 Board 2"
                 icon: mdi:chip
 
-      # Hashboard Individual Controls
+      # Power Profile Control (replaces individual hashboard control)
+      # Note: Individual hashboard switches removed in v1.0.27 due to LuxOS firmware limitations
+      # Use power profiles instead for granular power control (260MHz to 685MHz)
       - type: vertical-stack
         cards:
           - type: markdown
             content: |
-              ## 🎛️ Individual Hashboard Control
+              ## 🎛️ Power Profile Control
 
-          - type: entity
-            entity: input_boolean.pv_miner_progressive_hashboard
-            name: "⚡ Progressive Hashboard Control"
-            icon: mdi:chip
+              **Note:** Individual hashboard control is not supported by LuxOS firmware 2025.10.15.191043.
+              Use power profiles for granular control from 2223W (260MHz) to 3693W (685MHz).
 
           - type: horizontal-stack
             cards:
-              - type: entity
-                entity: switch.s19_hashboard_0
-                name: "Board 0"
-                icon: mdi:chip
+              - type: button
                 tap_action:
-                  action: toggle
+                  action: call-service
+                  service: pv_miner.set_power_profile
+                  service_data:
+                    profile: "260MHz"
+                  target:
+                    entity_id: switch.s19_miner
+                name: "🔋 Min\n260MHz"
+                icon: mdi:battery-charging-10
+                show_state: false
 
-              - type: entity
-                entity: switch.s19_hashboard_1
-                name: "Board 1"
-                icon: mdi:chip
+              - type: button
                 tap_action:
-                  action: toggle
+                  action: call-service
+                  service: pv_miner.set_power_profile
+                  service_data:
+                    profile: "385MHz"
+                  target:
+                    entity_id: switch.s19_miner
+                name: "⚡ Low\n385MHz"
+                icon: mdi:battery-charging-40
+                show_state: false
 
-              - type: entity
-                entity: switch.s19_hashboard_2
-                name: "Board 2"
-                icon: mdi:chip
+              - type: button
                 tap_action:
-                  action: toggle
+                  action: call-service
+                  service: pv_miner.set_power_profile
+                  service_data:
+                    profile: "510MHz"
+                  target:
+                    entity_id: switch.s19_miner
+                name: "⚖️ Mid\n510MHz"
+                icon: mdi:battery-charging-60
+                show_state: false
+
+              - type: button
+                tap_action:
+                  action: call-service
+                  service: pv_miner.set_power_profile
+                  service_data:
+                    profile: "685MHz"
+                  target:
+                    entity_id: switch.s19_miner
+                name: "🔥 Max\n685MHz"
+                icon: mdi:battery-charging-100
+                show_state: false
 
       # Number Controls
       - type: vertical-stack
