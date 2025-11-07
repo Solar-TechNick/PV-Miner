@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Remote address
+
+HomeAssist
+192.168.1.147
+userbname hassio
+password: hassio
+
+Miner s19
+192.168.1.210
+
 ## Project Overview
 
 PV-Miner is a Home Assistant custom integration for solar-powered Bitcoin mining. Controls Antminer devices (S21+, S19j Pro, S19j Pro+) running LuxOS firmware via their native API, enabling automated power management based on solar availability.
@@ -134,7 +144,7 @@ gh release create v1.0.15 --title "v1.0.15" --notes "Release notes" --latest
 
 ## Important Implementation Details
 
-**Current Version**: 1.0.29 (see manifest.json)
+**Current Version**: 1.0.30 (see manifest.json)
 
 **Language Convention**: German for user-facing strings (translations/de.json, translations/en.json), English for code and technical documentation.
 
@@ -193,6 +203,7 @@ Features:
 
 ## Recent Version History
 
+- **v1.0.30**: Added built-in automatic solar power adjustment - auto mode now works without external automations
 - **v1.0.29**: Fixed service registration bug preventing dashboard buttons from working after restart
 - **v1.0.28**: Updated dashboards to remove hashboard switch references, added power profile quick-access buttons
 - **v1.0.27**: Added Pro3EM sensor integration and full 19-step solar automation (all profiles from -16 to +1)

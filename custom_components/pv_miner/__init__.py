@@ -15,6 +15,7 @@ from .const import (
     DOMAIN,
 )
 from .luxos_api import LuxOSAPI, LuxOSAPIError
+from .solar_coordinator import SolarPowerCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -90,12 +91,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Fetch initial data
     await coordinator.async_config_entry_first_refresh()
 
+    # Create solar power coordinator for automatic adjustment
+    solar_coordinator = SolarPowerCoordinator(
+        hass,
+        api,
+        entry.entry_id,
+        entry.data[CONF_NAME],
+        "sensor.pro3em_total_active_power",
+    )
+    await solar_coordinator.async_start()
+
     # Store coordinator and API
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = {
         "coordinator": coordinator,
         "api": api,
         "config": entry.data,
+        "solar_coordinator": solar_coordinator,
     }
 
     # Setup platforms
@@ -112,12 +124,17 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     # Unload platforms
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    
+
     if unload_ok:
+        # Stop solar coordinator
+        solar_coordinator = hass.data[DOMAIN][entry.entry_id].get("solar_coordinator")
+        if solar_coordinator:
+            await solar_coordinator.async_stop()
+
         # Close API connection
         api = hass.data[DOMAIN][entry.entry_id]["api"]
         await api.close()
-        
+
         # Remove entry from data
         hass.data[DOMAIN].pop(entry.entry_id)
 

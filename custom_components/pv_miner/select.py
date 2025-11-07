@@ -223,28 +223,38 @@ class PVMinerSolarMode(CoordinatorEntity, SelectEntity):
         if option not in SOLAR_MODES:
             _LOGGER.error("Invalid solar mode: %s", option)
             return
-        
+
         self._current_mode = option
         mode_name = SOLAR_MODES[option]
-        
+
         _LOGGER.info(
             "Set solar mode '%s' for miner %s",
             mode_name,
             self._miner_name
         )
-        
+
+        # Get solar coordinator from hass data
+        solar_coordinator = self.hass.data[DOMAIN][self._config_entry_id].get("solar_coordinator")
+
         # Here you would implement the logic for each solar mode
         if option == "manual":
             # Manual mode - user controls power via number entity
-            pass
+            if solar_coordinator:
+                solar_coordinator.set_auto_mode(False)
         elif option == "auto":
             # Auto mode - automatically adjust based on solar sensors
+            if solar_coordinator:
+                solar_coordinator.set_auto_mode(True)
             await self._enable_auto_solar_tracking()
         elif option == "sun_curve":
             # Sun curve mode - follow sun pattern
+            if solar_coordinator:
+                solar_coordinator.set_auto_mode(False)
             await self._enable_sun_curve_mode()
         elif option == "peak_solar":
             # Peak solar mode - 120% power during peak sun
+            if solar_coordinator:
+                solar_coordinator.set_auto_mode(False)
             await self._enable_peak_solar_mode()
 
     async def _enable_auto_solar_tracking(self):
