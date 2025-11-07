@@ -134,7 +134,7 @@ gh release create v1.0.15 --title "v1.0.15" --notes "Release notes" --latest
 
 ## Important Implementation Details
 
-**Current Version**: 1.0.27 (see manifest.json)
+**Current Version**: 1.0.29 (see manifest.json)
 
 **Language Convention**: German for user-facing strings (translations/de.json, translations/en.json), English for code and technical documentation.
 
@@ -193,6 +193,8 @@ Features:
 
 ## Recent Version History
 
+- **v1.0.29**: Fixed service registration bug preventing dashboard buttons from working after restart
+- **v1.0.28**: Updated dashboards to remove hashboard switch references, added power profile quick-access buttons
 - **v1.0.27**: Added Pro3EM sensor integration and full 19-step solar automation (all profiles from -16 to +1)
 - **v1.0.26**: Removed non-functional hashboard switches, added solar power control automations
 - **v1.0.25**: Added hashboard control verification and LuxOS firmware limitation detection

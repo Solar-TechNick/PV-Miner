@@ -1,0 +1,33 @@
+#!/usr/bin/expect -f
+
+set timeout 20
+set host "192.168.1.147"
+set user "hassio"
+set password "hassio"
+
+# Create automations directory
+spawn ssh -o StrictHostKeyChecking=no $user@$host "mkdir -p /config/automations"
+expect {
+    "password:" { send "$password\r" }
+    timeout { puts "Timeout waiting for password prompt"; exit 1 }
+}
+expect eof
+
+# Copy solar_power_control_full.yaml
+spawn scp -o StrictHostKeyChecking=no automations/solar_power_control_full.yaml $user@$host:/config/automations/
+expect {
+    "password:" { send "$password\r" }
+    timeout { puts "Timeout waiting for password prompt"; exit 1 }
+}
+expect eof
+
+# Copy README.md
+spawn scp -o StrictHostKeyChecking=no automations/README.md $user@$host:/config/automations/
+expect {
+    "password:" { send "$password\r" }
+    timeout { puts "Timeout waiting for password prompt"; exit 1 }
+}
+expect eof
+
+puts "\n=== Files copied successfully! ==="
+puts "Files are now in /config/automations/ on Home Assistant"

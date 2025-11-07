@@ -101,8 +101,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Setup platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # Setup services
-    await _async_setup_services(hass)
+    # Setup services (only once, not per config entry)
+    if not hass.services.has_service(DOMAIN, "wake_miner"):
+        await _async_setup_services(hass)
 
     return True
 
