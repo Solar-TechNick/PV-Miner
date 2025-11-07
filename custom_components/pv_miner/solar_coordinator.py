@@ -12,25 +12,26 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 # Power profile mapping: available solar power (W) -> LuxOS profile name
+# Uses all profiles from -16 (260MHz) to +1 (685MHz)
 POWER_PROFILE_MAP = [
-    (0, "260MHz"),      # 0-2300W: Min power (2223W)
-    (2300, "285MHz"),   # 2300-2400W
-    (2400, "310MHz"),   # 2400-2500W
-    (2500, "335MHz"),   # 2500-2600W
-    (2600, "360MHz"),   # 2600-2700W
-    (2700, "385MHz"),   # 2700-2800W (Low)
-    (2800, "410MHz"),   # 2800-2900W
-    (2900, "435MHz"),   # 2900-3000W
-    (3000, "460MHz"),   # 3000-3100W
-    (3100, "485MHz"),   # 3100-3200W
-    (3200, "510MHz"),   # 3200-3300W (Mid)
-    (3300, "535MHz"),   # 3300-3400W
-    (3400, "560MHz"),   # 3400-3500W
-    (3500, "585MHz"),   # 3500-3600W
-    (3600, "610MHz"),   # 3600-3700W
-    (3700, "635MHz"),   # 3700-3800W
-    (3800, "660MHz"),   # 3800-3900W
-    (3900, "685MHz"),   # 3900W+: Max power (3693W)
+    (0, "260MHz"),      # 0-2300W: Profile -16 (Min: 2223W, 48 TH/s)
+    (2300, "285MHz"),   # 2300-2400W: Profile -15
+    (2400, "310MHz"),   # 2400-2500W: Profile -14
+    (2500, "335MHz"),   # 2500-2600W: Profile -12
+    (2600, "360MHz"),   # 2600-2700W: Profile -10
+    (2700, "385MHz"),   # 2700-2800W: Profile -8 (Low)
+    (2800, "410MHz"),   # 2800-2900W: Profile -7
+    (2900, "435MHz"),   # 2900-3000W: Profile -5
+    (3000, "460MHz"),   # 3000-3100W: Profile -6
+    (3100, "485MHz"),   # 3100-3200W: Profile -4
+    (3200, "510MHz"),   # 3200-3300W: Profile -3 (Mid)
+    (3300, "535MHz"),   # 3300-3400W: Profile -2
+    (3400, "560MHz"),   # 3400-3500W: Profile -1
+    (3500, "585MHz"),   # 3500-3600W: Profile -2
+    (3600, "610MHz"),   # 3600-3700W: Profile -1
+    (3700, "635MHz"),   # 3700-3800W: Profile 0
+    (3800, "660MHz"),   # 3800-3900W: Profile 0
+    (3900, "685MHz"),   # 3900W+: Profile +1 (Max: 3693W, 127 TH/s)
 ]
 
 
@@ -124,8 +125,40 @@ class SolarPowerCoordinator:
             else:
                 available_power = solar_power
 
+            # Check if we should sleep the miner (no solar power)
+            if available_power < 500:
+                # Not enough solar power - put miner to sleep
+                if self._current_profile != "sleep":
+                    _LOGGER.info(
+                        "Auto-sleeping %s: %.0fW solar (insufficient power)",
+                        self._miner_name,
+                        available_power,
+                    )
+                    try:
+                        await self._api.pause_mining()
+                        self._current_profile = "sleep"
+                    except Exception as e:
+                        _LOGGER.error("Failed to sleep miner: %s", e)
+                return
+
             # Determine appropriate power profile
             target_profile = self._get_profile_for_power(available_power)
+
+            # Wake miner if it's currently asleep
+            if self._current_profile == "sleep":
+                _LOGGER.info(
+                    "Auto-waking %s: %.0fW solar available",
+                    self._miner_name,
+                    available_power,
+                )
+                try:
+                    await self._api.resume_mining()
+                    # Give miner time to wake up before setting profile
+                    import asyncio
+                    await asyncio.sleep(5)
+                except Exception as e:
+                    _LOGGER.error("Failed to wake miner: %s", e)
+                    return
 
             # Only change profile if different from current
             if target_profile != self._current_profile:
@@ -153,9 +186,7 @@ class SolarPowerCoordinator:
 
     def _get_profile_for_power(self, available_power: float) -> str:
         """Get the appropriate power profile for available solar power."""
-        # If solar power is negative or very low, use minimum profile
-        if available_power < 100:
-            return "260MHz"
+        # Note: Caller should check for < 100W and handle sleep separately
 
         # Find the appropriate profile from the map
         for i, (threshold, profile) in enumerate(POWER_PROFILE_MAP):

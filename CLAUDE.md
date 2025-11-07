@@ -144,7 +144,7 @@ gh release create v1.0.15 --title "v1.0.15" --notes "Release notes" --latest
 
 ## Important Implementation Details
 
-**Current Version**: 1.0.30 (see manifest.json)
+**Current Version**: 1.0.31 (see manifest.json)
 
 **Language Convention**: German for user-facing strings (translations/de.json, translations/en.json), English for code and technical documentation.
 
@@ -203,6 +203,7 @@ Features:
 
 ## Recent Version History
 
+- **v1.0.31**: Added automatic sleep/wake functionality - miner sleeps when solar < 100W, wakes when solar returns
 - **v1.0.30**: Added built-in automatic solar power adjustment - auto mode now works without external automations
 - **v1.0.29**: Fixed service registration bug preventing dashboard buttons from working after restart
 - **v1.0.28**: Updated dashboards to remove hashboard switch references, added power profile quick-access buttons
