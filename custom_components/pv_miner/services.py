@@ -211,21 +211,25 @@ async def _execute_service_for_entity(
     **kwargs
 ) -> None:
     """Execute a service function for a specific entity."""
-    # Find the config entry for this entity
-    config_entry_id = None
-    for entry_id, entry_data in hass.data[DOMAIN].items():
-        # Check if this entity belongs to this config entry
-        # This is a simplified approach - in reality you'd need to track entity-to-config mappings
-        config_entry_id = entry_id
-        break
-    
-    if not config_entry_id:
+    from homeassistant.helpers import entity_registry as er
+
+    # Get entity registry to find config entry ID
+    entity_registry = er.async_get(hass)
+    entity_entry = entity_registry.async_get(entity_id)
+
+    if not entity_entry:
+        _LOGGER.error("Entity %s not found in registry", entity_id)
+        return
+
+    config_entry_id = entity_entry.config_entry_id
+
+    if not config_entry_id or config_entry_id not in hass.data.get(DOMAIN, {}):
         _LOGGER.error("Could not find config entry for entity %s", entity_id)
         return
-    
+
     api = hass.data[DOMAIN][config_entry_id]["api"]
     coordinator = hass.data[DOMAIN][config_entry_id]["coordinator"]
-    
+
     try:
         await service_func(api, **kwargs)
         await coordinator.async_request_refresh()
