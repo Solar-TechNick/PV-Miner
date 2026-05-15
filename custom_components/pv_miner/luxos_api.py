@@ -488,10 +488,6 @@ class LuxOSAPI:
         # LuxOS profileset format: session_id,profile_name (board ID not needed)
         return await self._execute_session_command("profileset", profile_name)
 
-    async def set_frequency(self, freq: int) -> Dict[str, Any]:
-        """Set frequency (overclock/underclock)."""
-        return await self._execute_command("frequencyset", str(freq))
-
     async def enable_hashboard(self, board: int) -> Dict[str, Any]:
         """Enable specific hashboard (pauses ATM temporarily)."""
         return await self._hashboard_control_with_atm("enableboard", board)

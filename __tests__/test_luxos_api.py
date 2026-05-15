@@ -54,16 +54,6 @@ async def test_get_stats(api):
 
 
 @pytest.mark.asyncio
-async def test_set_frequency(api):
-    """Test setting frequency."""
-    mock_response = {"STATUS": "OK"}
-    
-    with patch.object(api, '_make_request', return_value=mock_response):
-        result = await api.set_frequency(2)
-        assert result == mock_response
-
-
-@pytest.mark.asyncio
 async def test_connection_error(api):
     """Test connection error handling."""
     with patch.object(api, '_get_session') as mock_session:

@@ -56,10 +56,7 @@ SWITCH_TYPES = {
 
 # Services
 SERVICE_SET_POWER_PROFILE = "set_power_profile"
-SERVICE_SET_POWER_LIMIT = "set_power_limit"
 SERVICE_EMERGENCY_STOP = "emergency_stop"
-SERVICE_SOLAR_MAX = "solar_max"
-SERVICE_ECO_MODE = "eco_mode"
 SERVICE_SET_POOL = "set_pool"
 SERVICE_SLEEP_MINER = "sleep_miner"
 SERVICE_WAKE_MINER = "wake_miner"

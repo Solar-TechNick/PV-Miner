@@ -13,41 +13,9 @@ set_power_profile:
       selector:
         text:
 
-set_power_limit:
-  name: Set Power Limit
-  description: Set the power limit for the miner in watts
-  target:
-    entity:
-      domain: switch
-  fields:
-    power_limit:
-      name: Power Limit
-      description: Power limit in watts
-      example: 3000
-      required: true
-      selector:
-        number:
-          min: 500
-          max: 50000
-          unit_of_measurement: "W"
-
 emergency_stop:
   name: Emergency Stop
   description: Emergency stop all mining operations
-  target:
-    entity:
-      domain: switch
-
-solar_max:
-  name: Solar Max
-  description: Set to solar max mode (4200W)
-  target:
-    entity:
-      domain: switch
-
-eco_mode:
-  name: Eco Mode
-  description: Set to eco mode (1500W)
   target:
     entity:
       domain: switch
