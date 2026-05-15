@@ -2,257 +2,112 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Remote address
-
-HomeAssist
-192.168.1.147
-userbname hassio
-password: hassio
-
-Miner s19
-192.168.1.210
-
 ## Project Overview
 
-PV-Miner is a Home Assistant custom integration for solar-powered Bitcoin mining. Controls Antminer devices (S21+, S19j Pro, S19j Pro+) running LuxOS firmware via their native API, enabling automated power management based on solar availability.
+PV-Miner is a Home Assistant custom integration for solar-powered Bitcoin mining. It controls Antminer S21+, S19j Pro, and S19j Pro+ devices running **LuxOS firmware** over their native API, exposing entities and services that let HA automations follow available solar power.
 
-## Architecture Overview
+User-facing strings are German (translations/de.json + en.json). Code, comments, and commits are English. Current version is tracked in [custom_components/pv_miner/manifest.json](custom_components/pv_miner/manifest.json) — bump it in every commit (see Git Versioning Workflow).
 
-**Integration Type**: Home Assistant custom component (local polling device integration)
+## Architecture
 
-**Communication Layer**:
-- **Primary**: LuxOS TCP API (port 4028) - Direct socket communication with JSON protocol
-- **Fallback**: LuxOS HTTP API (port 8080) - REST endpoints for advanced features
-- **Authentication**: Session-based (logon command creates session_id used in subsequent commands)
+**Integration type**: HA `device` integration, `local_polling` iot_class. One config entry per miner.
 
-**Core Components**:
-1. **luxos_api.py**: Dual-protocol API client (TCP primary, HTTP fallback)
-2. **Coordinator Pattern**: DataUpdateCoordinator in `__init__.py` manages polling and state updates
-3. **Multi-platform Entities**: sensor.py (monitoring), switch.py (control), select.py (profiles), number.py (limits)
-4. **Multi-step Config Flow**: config_flow.py handles connection → power settings → intervals
-5. **Service Layer**: services.py exposes HA service calls for automation integration
+### Communication layer — [custom_components/pv_miner/luxos_api.py](custom_components/pv_miner/luxos_api.py)
 
-**Data Flow Architecture**:
-- Coordinator polls multiple LuxOS commands concurrently: `stats`, `devs`, `pools`, `power`, `temps`, `fans`
-- Entity classes subscribe to coordinator and extract their specific data from combined response
-- Session management is automatic - API client handles logon and session_id injection transparently
-- Commands requiring authentication (curtail, profileset, enableboard/disableboard) use session_id parameter
+Dual-protocol client. **Not Luxor's cloud REST API** — this talks to the miner directly on the LAN.
 
-## Key Architectural Patterns
+- `_tcp_command()` — primary path. Raw socket on **port 4028** with newline-delimited JSON, wrapped in `loop.run_in_executor()` so the sync socket call doesn't block HA's event loop.
+- `_http_command()` — fallback on **port 8080** via `aiohttp`.
+- `_execute_command()` — tries TCP first, falls back to HTTP on failure.
+- `_ensure_session()` — calls `logon` once and caches the `session_id`. Any authenticated command (`curtail`, `profileset`, `enableboard`, `disableboard`, `atmset`) gets the session_id prepended to its `parameter` string, e.g. `"session_id,profile_name"`.
 
-**LuxOS API Dual-Protocol Design** (luxos_api.py):
+When editing this file, preserve the executor-wrap pattern: doing synchronous socket I/O on the event loop will hang HA.
 
-- `_tcp_command()`: Primary method using sync sockets wrapped in `run_in_executor()` to avoid blocking event loop
-- `_http_command()`: Fallback using aiohttp for HTTP/8080 endpoints
-- `_execute_command()`: Intelligent router that tries TCP first, falls back to HTTP on failure
-- Session management: `_ensure_session()` automatically calls `logon` command and caches session_id
-- All authenticated commands inject session_id parameter: `{"command": "profileset", "parameter": "session_id,profile_name"}`
+### Coordinator pattern — [custom_components/pv_miner/\_\_init\_\_.py](custom_components/pv_miner/__init__.py)
 
-**Coordinator Data Collection Pattern** (\_\_init\_\_.py):
+A single `DataUpdateCoordinator` per miner fans out concurrent LuxOS commands per poll: `stats`, `devs`, `pools`, `power`, `temps`, `fans`. All entity platforms (`sensor`, `switch`, `select`, `number`) subscribe to this coordinator and extract their slice from the combined dict — e.g. `coordinator.data["power"][0]["POWER"][0]["Power"]`. Add new data sources here, not in the entities.
 
-```python
-# Coordinator fetches multiple commands in parallel for efficiency
-async def _async_update_data():
-    stats = await api.get_stats()      # Hashrate, uptime
-    devs = await api.get_devs()        # Per-hashboard data
-    pools = await api.get_pools()      # Mining pool info
-    power = await api._execute_command("power", "")   # Real power consumption
-    temps = await api._execute_command("temps", "")   # Detailed temperatures
-    fans = await api._execute_command("fans", "")     # Fan speeds
-    return {"stats": stats, "devs": devs, ...}  # Combined data for all entities
-```
+### Solar auto-control loop — [custom_components/pv_miner/solar_coordinator.py](custom_components/pv_miner/solar_coordinator.py)
 
-**Entity Data Extraction Pattern** (sensor.py, switch.py, etc):
+Added in v1.0.30. Built-in loop that reads a HA power-meter sensor (e.g. `sensor.pro3em_total_active_power`) and walks the LuxOS profile ladder up/down to follow available solar. v1.0.31 added auto sleep (`curtail` to sleep when solar < ~100W) and wake when solar returns. This makes the YAML automations in [automations/](automations/) optional — they remain as an alternative for users who want the logic in HA rather than in the integration.
 
-- Each entity subscribes to coordinator via `@property coordinator_data`
-- Entities extract only their needed data from coordinator's combined response
-- Example: Power sensor reads `coordinator.data["power"][0]["POWER"][0]["Power"]`
-- Example: Temperature sensor averages values from `coordinator.data["temps"]`
+### Entity platforms
 
-**Multi-Step Configuration Flow** (config_flow.py):
+`sensor.py` (monitoring), `switch.py` (mining on/off, profile presets), `select.py` (profile dropdown — populated dynamically from `profileget`), `number.py` (power limits). Hashboard-per-board switches were **removed in v1.0.26** — see "LuxOS firmware bug" below.
 
-1. `async_step_user()`: Connection details (host, username, password)
-2. `async_step_power()`: Power limits (min/max watts, priority)
-3. `async_step_intervals()`: Update intervals (miner scan, solar scan)
-4. Each step validates and stores data, final step creates config entry
+### Config flow — [custom_components/pv_miner/config_flow.py](custom_components/pv_miner/config_flow.py)
 
-## Development Commands
+Three steps: `async_step_user` (host/user/pass) → `async_step_power` (min/max W, priority) → `async_step_intervals` (poll intervals). Each step validates before advancing.
 
-### Testing and Debugging
+### Services — [custom_components/pv_miner/services.py](custom_components/pv_miner/services.py) + [services.yaml](custom_components/pv_miner/services.yaml)
+
+Service registration is global (not per-entry). v1.0.29 fixed a bug where services were lost after restart — if touching service setup, verify they survive a HA restart, not just a reload.
+
+## Development workflow
+
+### Running tests
 
 ```bash
-# Test miner connectivity (no dependencies)
-python3 simple_debug.py <miner_ip>
-
-# Test full API functionality
-python3 test_api_direct.py
-
-# Debug with aiohttp (external dependencies)
-python3 debug_connection.py <miner_ip>
-
-# Run integration tests
-python3 -m pytest __tests__/
-
-# Run specific test file
-python3 -m pytest __tests__/test_luxos_api.py
-
-# Test with coverage (if pytest-cov installed)
-python3 -m pytest __tests__/ --cov=custom_components/pv_miner
+python3 -m pytest __tests__/                          # all tests
+python3 -m pytest __tests__/test_luxos_api.py         # single file
+python3 -m pytest __tests__/test_luxos_api.py::test_logon -v   # single test
 ```
 
-### Home Assistant Development Workflow
+Tests in [\_\_tests\_\_/](__tests__/) cover the API client, config flow, and ATM/hashboard control paths. They mock the miner socket — no live miner needed.
+
+### Live-miner diagnostics (root-level scripts)
+
+These run **outside** Home Assistant against a real miner — use them when sensors show "Unknown" or commands appear to succeed but nothing changes:
+
+- [test_hashboard_simple.py](test_hashboard_simple.py) — interactive: connects, logs on, reads ATM/board state, lets you toggle boards, then verifies whether state actually changed. This is how the "LuxOS firmware bug" below was confirmed.
+- [test_hashboard_control.py](test_hashboard_control.py) — non-interactive variant.
+- [fetch_ha_logs.py](fetch_ha_logs.py) — pulls HA logs via REST when SSH is unavailable; needs a long-lived access token.
+
+### Deploying to a running HA instance
+
+The integration is consumed at `<ha-config>/custom_components/pv_miner/`. Use one of the helper scripts:
 
 ```bash
-# 1. Copy integration to HA custom_components directory
-cp -r custom_components/pv_miner /path/to/homeassistant/custom_components/
-
-# 2. Enable debug logging in configuration.yaml
-# logger:
-#   default: info
-#   logs:
-#     custom_components.pv_miner: debug
-
-# 3. Restart Home Assistant (required after code changes)
-# Developer Tools → Restart
-
-# 4. Reload integration (for config changes only, not code changes)
-# Developer Tools → YAML → Reload all YAML configuration
+./copy_to_ha.sh         # rsync-based local copy
+python3 copy_to_ha.py   # python equivalent
+./upload_to_ha.sh       # SCP to remote HA host
 ```
 
-### Git Versioning Workflow
+HA must be **restarted** (not just reloaded) after any Python code change.
 
-**IMPORTANT**: Always update manifest.json version and create tags when committing:
+### Git versioning workflow
+
+Every commit that ships changes to `custom_components/pv_miner/` must bump `manifest.json` `version` and create a matching tag — HACS users pull from tags.
 
 ```bash
-# 1. Edit manifest.json - increment "version" field (e.g., "1.0.14" → "1.0.15")
-
-# 2. Commit with conventional commit message
-git add .
-git commit -m "fix: description"      # Bug fixes (1.0.X)
-# OR
-git commit -m "feat: description"     # New features (1.X.0)
-# OR
-git commit -m "docs: description"     # Documentation only
-
-# 3. Create and push version tag
-git tag -a v1.0.15 -m "Release notes here"
+# 1. Bump manifest.json "version" (1.0.X for fixes, 1.X.0 for features)
+# 2. Commit with conventional message: fix:/feat:/docs:
+# 3. Tag and push:
+git tag -a v1.0.NN -m "Release notes"
 git push origin main --tags
-
-# 4. Create GitHub release (if gh CLI available)
-gh release create v1.0.15 --title "v1.0.15" --notes "Release notes" --latest
+# 4. Optional: gh release create v1.0.NN --notes "..." --latest
 ```
 
-## Important Implementation Details
+Each release also gets a `RELEASE_NOTES_v1.0.NN.md` at the repo root.
 
-**Current Version**: 1.0.31 (see manifest.json)
+## Key LuxOS commands
 
-**Language Convention**: German for user-facing strings (translations/de.json, translations/en.json), English for code and technical documentation.
+All over TCP/4028. Authenticated commands need `session_id` injected into `parameter`.
 
-**Supported Hardware**:
+- **Read-only**: `stats`, `devs`, `pools`, `power`, `temps`, `fans`, `version`, `summary`, `profileget`, `atmget`
+- **Authenticated**: `logon`, `curtail` (sleep/wakeup), `profileset`, `enableboard`, `disableboard`, `atmset`
 
-- Antminer S21+, S19j Pro, S19j Pro+ running LuxOS firmware
-- Default credentials: username `root`, password `root`
-- Test miners: 192.168.1.210, 192.168.1.211, 192.168.1.212
+## Known firmware quirks (read before debugging)
 
-**Key LuxOS Commands** (all via port 4028 TCP):
+**"Miner is already active" responses are not errors.** Calling `curtail wakeup` on a running miner returns this — v1.0.22 demoted it to DEBUG at every layer (TCP, HTTP, `_execute_command`, curtail wrapper, switch). If you reintroduce ERROR-level logging here, you'll spam the HA log on every poll.
 
-- Monitoring: `stats`, `devs`, `pools`, `power`, `temps`, `fans`, `version`, `summary`
-- Control (require session_id): `curtail` (sleep/wakeup), `enableboard`, `disableboard`, `profileget`, `profileset`
-- Authentication: `logon` (creates session), `session` (get current session info)
+**Hashboard enable/disable is broken in LuxOS firmware ~2025.10.15.** Commands return `STATUS=S` "Board enabled/disabled" but board state never actually changes. Confirmed by direct TCP calls bypassing the integration. This is a firmware bug, not an integration bug — do not "fix" it by retrying or by re-adding the per-board switches removed in v1.0.26. Power control is done via **profile switching** instead (LuxOS profiles -16 → +1 map to ~2223W → ~3693W); see [automations/solar_power_control_full.yaml](automations/solar_power_control_full.yaml) (19-step) or [automations/solar_power_control.yaml](automations/solar_power_control.yaml) (9-step).
 
-## Common Debugging Scenarios
+**Hashboard commands when miner is asleep return "curtail mode is idle or sleep".** v1.0.20 added auto-wake before any board command — preserve that ordering if you refactor switch.py.
 
-**Connection Issues**:
+## Common debugging scenarios
 
-1. Verify miner is reachable: `telnet <miner_ip> 4028`
-2. Check credentials (default: root/root)
-3. Run debug script: `python3 simple_debug.py <miner_ip>`
-4. Check Home Assistant logs: Settings → System → Logs, filter by `pv_miner`
-
-**Sensor Shows "Unknown"**:
-
-- Fixed in v1.0.9+. Update manifest.json version if needed.
-- Verify coordinator is fetching `power`, `temps`, `fans` commands successfully in logs.
-
-**Switch Not Responding**:
-
-- Ensure miner supports LuxOS curtail commands (S21+, S19j Pro with LuxOS firmware)
-- Check session management in logs - should see "LuxOS session created" messages
-- Verify hashboard commands use correct format: `session_id,board_id` (e.g., `123abc,0`)
-
-**Profile Dropdown Empty**:
-
-- Profiles are loaded dynamically from miner on first connection
-- Check logs for `profileget` command results
-- Ensure miner has LuxOS profiles configured (use LuxOS web interface to verify)
-
-## Diagnostic Tools
-
-**test_hashboard_simple.py**: Standalone diagnostic tool for testing LuxOS hashboard control directly (bypasses Home Assistant). Useful for diagnosing firmware issues. Usage:
-```bash
-python3 test_hashboard_simple.py
-```
-Features:
-- Tests basic miner connection
-- Gets session ID and ATM status
-- Shows current hashboard states
-- Interactive board enable/disable testing
-- Verifies if commands actually change board state
-
-**fetch_ha_logs.py**: Fetches Home Assistant logs via REST API when SSH is not available. Requires a long-lived access token from HA.
-
-## Recent Version History
-
-- **v1.0.31**: Added automatic sleep/wake functionality - miner sleeps when solar < 100W, wakes when solar returns
-- **v1.0.30**: Added built-in automatic solar power adjustment - auto mode now works without external automations
-- **v1.0.29**: Fixed service registration bug preventing dashboard buttons from working after restart
-- **v1.0.28**: Updated dashboards to remove hashboard switch references, added power profile quick-access buttons
-- **v1.0.27**: Added Pro3EM sensor integration and full 19-step solar automation (all profiles from -16 to +1)
-- **v1.0.26**: Removed non-functional hashboard switches, added solar power control automations
-- **v1.0.25**: Added hashboard control verification and LuxOS firmware limitation detection
-- **v1.0.24**: Added detailed diagnostic logging for hashboard control operations
-- **v1.0.23**: Added connection logging (shows miner IP on startup)
-- **v1.0.22**: Comprehensive "already active" error suppression at all API layers
-- **v1.0.21**: Initial error handling improvements for "already active" errors
-- **v1.0.20**: Auto-wake miner before hashboard control operations
-- **v1.0.19**: HACS validation fixes and repository restructuring
-
-## Error Handling Best Practices
-
-**"Miner is already active" errors**: This is expected behavior when calling resume_mining() on an active miner. As of v1.0.22, these are properly suppressed at all layers:
-- TCP API layer: Logs as DEBUG instead of ERROR
-- HTTP API layer: Logs as DEBUG instead of ERROR
-- Execute command layer: Logs as DEBUG instead of ERROR
-- Curtail command layer: Skips WARNING logs
-- Switch layer: Gracefully handles the response
-
-**Hashboard control when miner is asleep**: As of v1.0.20, hashboard switches automatically call resume_mining() before enable/disable operations to prevent "curtail mode is idle or sleep" errors.
-
-**Hashboard control not working (v1.0.25-v1.0.26)**:
-
-**CONFIRMED BUG**: LuxOS firmware 2025.10.15.191043 has non-functional `enableboard`/`disableboard` commands. Extensive testing confirms:
-- Commands return success ("Board enabled"/"Board disabled") with STATUS='S'
-- Board state never changes (remains Enabled=Y regardless of command)
-- Issue persists even with ATM disabled
-- Issue persists even with Home Assistant completely off
-- Tested over 30+ seconds with no state change
-- Affects all hashboards regardless of their working status
-
-**Testing performed**: Direct TCP API calls to miner at 192.168.1.210, bypassing all integration layers. Commands accepted but have zero effect on hardware.
-
-**Root cause**: This is a LuxOS firmware bug/limitation, NOT an integration issue. The hardware reports the command succeeded but doesn't execute it.
-
-**Solution (v1.0.26+)**: Hashboard switches removed from integration. Use power profile switching instead via the included automations:
-1. **19-step automation** (Recommended): `automations/solar_power_control_full.yaml` - Uses all profiles from -16 (260MHz, 2223W) to +1 (685MHz, 3693W) with ~80W intervals
-2. **9-step automation** (Simpler): `automations/solar_power_control.yaml` - Uses key profiles with 200-300W intervals
-
-Both automations integrate with Pro3EM energy meter (`sensor.pro3em_total_active_power`) for solar-following power control. See `automations/README.md` for setup instructions.
-
-## Future Development Areas
-
-Based on todo.md, planned features include:
-
-- **Solar Integration**: Automatic power adjustment based on available solar power (entities ready, automation logic pending)
-- **Multi-miner Management**: Priority-based power distribution across multiple miners (framework exists, needs coordination logic)
-- **Sun Curve Mode**: Automatic power adjustment following daily solar patterns (UI exists, calculation logic needed)
-- **Temperature Protection**: Auto-underclock at configurable temperature thresholds (sensors ready, action logic pending)
+- **Connection fails**: `telnet <miner_ip> 4028` first. Default creds are `root` / `root`. Then run `python3 test_hashboard_simple.py` — it isolates whether the issue is API, auth, or HA-side.
+- **Sensors "Unknown"**: check the coordinator log for failures on `power` / `temps` / `fans` — these are the commands that newer firmware sometimes renames or restructures.
+- **Profile dropdown empty**: `profileget` returned nothing. Verify profiles exist via the LuxOS web UI; the integration does not create them.
+- **Service buttons stop working after HA restart** (not reload): regression of the v1.0.29 fix — check `services.py` is registering on integration setup, not on entry setup.
